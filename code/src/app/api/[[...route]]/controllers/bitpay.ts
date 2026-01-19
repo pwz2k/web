@@ -44,6 +44,10 @@ const app = new Hono().post(
     invoice.buyer = buyer;
 
     // Create the invoice in BitPay
+    if (!bitpayClient) {
+      return c.json({ error: 'BitPay client not initialized' }, 500);
+    }
+
     const createdInvoice = await bitpayClient.createInvoice(invoice);
 
     console.log({ url: createdInvoice.url });
