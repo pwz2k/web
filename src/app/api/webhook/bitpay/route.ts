@@ -36,6 +36,15 @@ export async function POST(req: NextRequest) {
       `Received BitPay webhook: ${event?.name || 'unknown'} for invoice ${data.id}`
     );
 
+    // Check if BitPay client is available
+    if (!bitpayClient) {
+      console.error('BitPay client is not configured');
+      return NextResponse.json(
+        { error: 'BitPay is not configured' },
+        { status: 503 }
+      );
+    }
+
     // Retrieve the invoice from BitPay to verify authenticity and get current status
     const invoice = await bitpayClient.getInvoice(data.id);
 

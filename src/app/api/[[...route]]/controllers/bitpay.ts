@@ -43,6 +43,11 @@ const app = new Hono().post(
     buyer.notify = true;
     invoice.buyer = buyer;
 
+    // Check if BitPay client is available
+    if (!bitpayClient) {
+      return c.json({ error: 'BitPay is not configured' }, 503);
+    }
+
     // Create the invoice in BitPay
     const createdInvoice = await bitpayClient.createInvoice(invoice);
 
