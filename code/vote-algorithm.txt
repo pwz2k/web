@@ -1,0 +1,46 @@
+How Voting Works
+ 
+-       Vote on a 1-10 numerical scale.
+-       Unregistered visitor votes hold a lower value.
+-       Once the viewer rates the picture, the page refreshes with a new picture to rate as well as data (average rating and the number of votes cast) for the previous image. The user only sees how others rated a person after the user rates the photo. 
+-       Pictures show at random (never shows more than once if voted on already within 6 hours unless users has viewed ALL photos in database)
+-       We have to develop a system that will account for people voting 1 or 10 just to skip to the next picture. Voting values 1, 2, 9, 10 will have less value weight than the other numbers.
+-       If a user averages rating people 1-5 only, then we will give their votes slightly more value. And if a user averages rating people 9-10 we will give their votes less value.
+-       If people viewed the referral link to a profile picture, that vote will hold a lesser value.
+-       If a straight (heterosexual) male is voting on another male photo, the voting weight value will be lower. Same rule applies to females. However Gay/Bisexual users will have no change in weight value when voting on the same gender.
+
+Voting Algorithm
+Lower weight value for values 1 and 10 (Meaning a 10 vote holds a lesser score than a 7, and a 1 vote holds a lesser negative score than a 3). Weight scale for weights are required because majority of people will just hit the first number they see (a 1 or a 10) just to skip to the next picture. So this is why we need a weighted scale to give realistic scores. 
+Heterosexual vote on same sex will hold a significantly lower value (this is to prevent a individual that is not interested in same sex for intentionally trying to lower or higher the rating of another user)
+Log all votes based on value and gender that voted, age of user. This data is important as it's the core of our project and where the value is. The heartbeat of the website.
+Current user duplicate votes hold less value.
+Dramatically lower weight value for guests (this will help prevent bots or guests from significantly impacting scores)
+Check IPs to prevent users voting on their own image
+Check that the same IP has not voted multiple times on the same image within X time
+Calculate average score per photo
+Save total votes per photo
+
+Explaining rating algorithm more:
+
+Can use a Truncated mean, which means that outliers are eliminated.
+
+
+Then use a Weighted mean, based on an internal scoring of registered users. 
+
+
+Have a separate weight for the voters that are male voting on a male photo, when the voting male is straight and not gay. Same rule would apply for female voting.
+
+
+Have a separate weight for Americans voting on a photo from a different country, and vice versa.
+
+
+Another separate weight when an older male is voting on a younger woman, as older men may only give younger women higher votes but then lower votes to anyone around the male's age. 
+
+
+This algorithm you’ll be creating will help with detecting some ballot stuffing. At some point I would assume people will start using bots to help with voting just to boost their pictures higher or to make a negative impact on someone who has a high score. 
+
+
+Also factored in should be the age and validity of the account. Meaning if a user in the system is VERIFIED, their weights would be higher. If a user is newly registered their votes count for less, etc. Can also provide more weight for users who have spent a certain threshold of money on the website, as that shows they’re more serious about their activity on the website.
+
+
+The more active a user is on the website, the more weight their votes get. Example a user comments on photos often, constantly adding new photos to their profile, checking their review scores page, voting on a lot of pictures daily, etc. This makes this user more loyal to the system, therefore should have more value to the website vs. someone who rarely participates.
