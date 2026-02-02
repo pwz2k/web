@@ -1,5 +1,6 @@
 import { currentUser } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
+import { HTTPException } from 'hono/http-exception';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -22,6 +23,14 @@ const app = new Hono().post(
 
     if (!amount) {
       return c.json({ message: 'Amount is required!' }, 400);
+    }
+
+    // Check if Stripe is configured
+    if (!stripe) {
+      return c.json(
+        { message: 'Payment service is not configured. Please contact support.' },
+        503
+      );
     }
 
     // Find or create a customer in Stripe

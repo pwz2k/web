@@ -9,10 +9,12 @@ import * as React from 'react';
 const PasswordInput = React.forwardRef<
   HTMLInputElement,
   React.ComponentProps<'input'>
->(({ className, ...props }, ref) => {
+>(({ className, value, ...props }, ref) => {
   const [showPassword, setShowPassword] = React.useState(false);
+  // Ensure value is always a string to prevent uncontrolled/controlled warning
+  const inputValue = value === undefined || value === null ? '' : String(value);
   const disabled =
-    props.value === '' || props.value === undefined || props.disabled;
+    inputValue === '' || props.disabled;
 
   return (
     <div className='relative'>
@@ -20,6 +22,7 @@ const PasswordInput = React.forwardRef<
         type={showPassword ? 'text' : 'password'}
         className={cn('hide-password-toggle pr-10', className)}
         ref={ref}
+        value={inputValue}
         {...props}
       />
       <Button

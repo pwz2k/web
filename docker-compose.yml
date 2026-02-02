@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: social-media-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: socialmedia
+      POSTGRES_PASSWORD: socialmedia123
+      POSTGRES_DB: socialmedia
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socialmedia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  app:
+    image: node:20-alpine
+    container_name: social-media-app
+    working_dir: /app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://socialmedia:socialmedia123@postgres:5432/socialmedia
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - AUTH_SECRET=dh6OJqLt9zlVTNIVs5dTre5RRDZQkWLhYtE3SlIoAuY=
+      - NODE_OPTIONS=--max-old-space-size=4096
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    command: sh -c "npm run dev"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -112,15 +112,20 @@ export default function SignupForm() {
         values.image = uploadedFiles[0].url;
       }
 
-      register(values).then((data) => {
-        setError(data.error);
+      register(values)
+        .then((data) => {
+          setError(data.error);
 
-        if (data.success) {
-          setSuccess(data.success);
-          throwConfetti('fireworks');
-          login({ email: values.email, password: values.password });
-        }
-      });
+          if (data.success) {
+            setSuccess(data.success);
+            throwConfetti('fireworks');
+            login({ email: values.email, password: values.password });
+          }
+        })
+        .catch((error) => {
+          console.error('Registration error:', error);
+          setError('Something went wrong. Please try again later.');
+        });
     });
   };
 

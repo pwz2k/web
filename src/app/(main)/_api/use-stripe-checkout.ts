@@ -1,10 +1,11 @@
 import { client } from '@/lib/hono';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { useMutation } from '@tanstack/react-query';
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+// Only initialize Stripe if publishable key is available
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : Promise.resolve(null);
 
 // Function to call the backend
 const createCheckoutSession = async ({ amount }: { amount: number }) => {
@@ -26,6 +27,9 @@ export const useStripeCheckoutMutation = () => {
       const stripe = await stripePromise;
       if (stripe) {
         await stripe.redirectToCheckout({ sessionId });
+      } else {
+        console.error('Stripe is not configured. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.');
+        alert('Payment service is not configured. Please contact support.');
       }
     },
     onError: (error) => {

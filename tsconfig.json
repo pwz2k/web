@@ -4,6 +4,7 @@
     "allowJs": true,
     "target": "es2015",
     "skipLibCheck": true,
+    "types": [],
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,

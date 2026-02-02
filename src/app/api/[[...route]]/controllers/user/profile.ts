@@ -10,13 +10,14 @@ import { Hono } from 'hono';
 
 const app = new Hono()
   .get('/', async (c) => {
-    const user = await currentUser();
-    if (!user || !user?.id) {
-      return c.json({ message: 'Unauthorized' }, 401);
-    }
+    try {
+      const user = await currentUser();
+      if (!user || !user?.id) {
+        return c.json({ message: 'Unauthorized' }, 401);
+      }
 
-    // Fetch the user with their payout methods
-    const dbUser = await db.user.findUnique({
+      // Fetch the user with their payout methods
+      const dbUser = await db.user.findUnique({
       where: { id: user.id },
       include: {
         PayoutMethod: true,
@@ -86,16 +87,26 @@ const app = new Hono()
       }
     }
 
-    return c.json({
-      data: {
-        ...dbUser,
-        stats: {
-          receivedVotes,
-          averageRating: userAvgRating,
-          percentileStat,
+      return c.json({
+        data: {
+          ...dbUser,
+          stats: {
+            receivedVotes,
+            averageRating: userAvgRating,
+            percentileStat,
+          },
         },
-      },
-    });
+      });
+    } catch (error: any) {
+      console.error('Error fetching user profile:', error);
+      if (error?.message?.includes("Can't reach database server") || error?.code === 'P1001') {
+        return c.json(
+          { message: 'Database connection failed. Please check your database configuration.' },
+          503
+        );
+      }
+      return c.json({ message: 'Internal server error' }, 500);
+    }
   })
 
   .patch('/', zValidator('json', updateUserSchema), async (c) => {

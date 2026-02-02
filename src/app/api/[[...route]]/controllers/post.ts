@@ -28,12 +28,13 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const { page, preference, id } = c.req.valid('query');
-      const limit = 10;
-      const skip = (page - 1) * limit;
+      try {
+        const { page, preference, id } = c.req.valid('query');
+        const limit = 10;
+        const skip = (page - 1) * limit;
 
-      // Get user from auth
-      const user = await currentUser();
+        // Get user from auth
+        const user = await currentUser();
 
       // Build base filter - this is used for both count and fetch queries
       const baseFilter: any = {
@@ -471,21 +472,32 @@ const app = new Hono()
 
       const hasMore = usedRandomFallback ? false : skip + limit < total;
 
-      return c.json({
-        data: cleanPosts,
-        hasMore: true,
-        nextPage: !hasMore ? 1 : usedRandomFallback ? 1 : page + 1,
-        isRandomized: usedRandomFallback,
-      });
+        return c.json({
+          data: cleanPosts,
+          hasMore: true,
+          nextPage: !hasMore ? 1 : usedRandomFallback ? 1 : page + 1,
+          isRandomized: usedRandomFallback,
+        });
+      } catch (error: any) {
+        console.error('Error fetching posts:', error);
+        if (error?.message?.includes("Can't reach database server") || error?.code === 'P1001') {
+          return c.json(
+            { message: 'Database connection failed. Please check your database configuration.', data: [], hasMore: false, nextPage: 1 },
+            503
+          );
+        }
+        return c.json({ message: 'Internal server error', data: [], hasMore: false, nextPage: 1 }, 500);
+      }
     }
   )
   .get('/top-creators-today', async (c) => {
-    // Get the start and end of the current day
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
+    try {
+      // Get the start and end of the current day
+      const todayStart = startOfDay(new Date());
+      const todayEnd = endOfDay(new Date());
 
-    // First, get all posts updated today with their engagement metrics
-    const todayPosts = await db.post.findMany({
+      // First, get all posts updated today with their engagement metrics
+      const todayPosts = await db.post.findMany({
       where: {
         AND: [
           {
@@ -760,21 +772,31 @@ const app = new Hono()
       });
     }
 
-    // This code should never be reached, but included for safety
-    return c.json({
-      data: topPosts.map((post) => ({
-        id: post.id,
-        caption: post.caption,
-        image: post.image,
-        creator: post.creator,
-        engagementScore: post.engagementScore,
-        weightedRating: post.weightedAverageRating,
-        totalVotes: post._count.vote,
-        totalComments: post._count.comment,
-        impressions: post.impressions,
-      })),
-      message: 'Top posts based on engagement and vote quality',
-    });
+      // This code should never be reached, but included for safety
+      return c.json({
+        data: topPosts.map((post) => ({
+          id: post.id,
+          caption: post.caption,
+          image: post.image,
+          creator: post.creator,
+          engagementScore: post.engagementScore,
+          weightedRating: post.weightedAverageRating,
+          totalVotes: post._count.vote,
+          totalComments: post._count.comment,
+          impressions: post.impressions,
+        })),
+        message: 'Top posts based on engagement and vote quality',
+      });
+    } catch (error: any) {
+      console.error('Error fetching top creators:', error);
+      if (error?.message?.includes("Can't reach database server") || error?.code === 'P1001') {
+        return c.json(
+          { message: 'Database connection failed. Please check your database configuration.', data: [] },
+          503
+        );
+      }
+      return c.json({ message: 'Internal server error', data: [] }, 500);
+    }
   })
   .get(
     '/:id',

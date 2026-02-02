@@ -20,14 +20,27 @@ const nextConfig = {
   staticPageGenerationTimeout: 180, // 3 minutes
 
   webpack: (config, { isServer }) => {
-    // Fix for Prisma client resolution with pnpm
+    // Fix for Prisma client resolution
     config.resolve.alias = {
       ...config.resolve.alias,
       '.prisma/client/default': path.resolve(
         __dirname,
-        'node_modules/@prisma/client/.prisma/client/default'
+        'node_modules/.prisma/client/default'
+      ),
+      '@prisma/client': path.resolve(
+        __dirname,
+        'node_modules/@prisma/client'
       ),
     };
+    
+    // Ensure Prisma client is externalized correctly
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        '.prisma/client': 'commonjs .prisma/client',
+      });
+    }
+    
     return config;
   },
 };
