@@ -22,6 +22,8 @@ The algorithm consists of several interconnected components:
 
 Base weight determines a user's fundamental voting power based on:
 
+
+
 - **Account Age**: Newer accounts receive a reduced weight (0.7×) if less than 30 days old
 - **Verification Status**: Verified users receive an increased weight (1.2×)
 - **Activity Score**: Users gain additional weight based on their platform engagement
