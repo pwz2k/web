@@ -95,6 +95,9 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event) {
   }
 
   // Retrieve customer from Stripe
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
   const stripeCustomer = await stripe.customers.retrieve(stripeCustomerId);
 
   if (stripeCustomer.deleted) {
@@ -145,6 +148,10 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
 
   // Only process completed payments
   if (session.payment_status === 'paid') {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+
     const stripeCustomerId = session.customer as string;
 
     if (!stripeCustomerId) {

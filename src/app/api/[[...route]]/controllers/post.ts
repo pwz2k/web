@@ -478,9 +478,10 @@ const app = new Hono()
           nextPage: !hasMore ? 1 : usedRandomFallback ? 1 : page + 1,
           isRandomized: usedRandomFallback,
         });
-      } catch (error: any) {
-        console.error('Error fetching posts:', error);
-        if (error?.message?.includes("Can't reach database server") || error?.code === 'P1001') {
+        } catch (error: unknown) {
+          console.error('Error fetching posts:', error);
+          const err = error as { message?: string; code?: string };
+          if (err?.message?.includes("Can't reach database server") || err?.code === 'P1001') {
           return c.json(
             { message: 'Database connection failed. Please check your database configuration.', data: [], hasMore: false, nextPage: 1 },
             503
@@ -787,9 +788,10 @@ const app = new Hono()
         })),
         message: 'Top posts based on engagement and vote quality',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching top creators:', error);
-      if (error?.message?.includes("Can't reach database server") || error?.code === 'P1001') {
+      const err = error as { message?: string; code?: string };
+      if (err?.message?.includes("Can't reach database server") || err?.code === 'P1001') {
         return c.json(
           { message: 'Database connection failed. Please check your database configuration.', data: [] },
           503

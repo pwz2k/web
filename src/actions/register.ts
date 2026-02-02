@@ -34,10 +34,11 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     let existingUser;
     try {
       existingUser = await getUserByEmail(email);
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       // Check if it's a database connection error
-      if (dbError?.message?.includes("Can't reach database server") || 
-          dbError?.code === 'P1001') {
+      const err = dbError as { message?: string; code?: string };
+      if (err?.message?.includes("Can't reach database server") || 
+          err?.code === 'P1001') {
         return { 
           error: 'Database connection failed. Please check your database configuration or contact support.' 
         };
@@ -62,16 +63,17 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
           image,
         },
       });
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       // Check if it's a database connection error
-      if (dbError?.message?.includes("Can't reach database server") || 
-          dbError?.code === 'P1001') {
+      const err = dbError as { message?: string; code?: string };
+      if (err?.message?.includes("Can't reach database server") || 
+          err?.code === 'P1001') {
         return { 
           error: 'Database connection failed. Please check your database configuration or contact support.' 
         };
       }
       // Check for unique constraint violations
-      if (dbError?.code === 'P2002') {
+      if (err?.code === 'P2002') {
         return { error: 'Username or email already in use!' };
       }
       throw dbError; // Re-throw if it's a different error
@@ -87,18 +89,19 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
             creatorId: user.id,
           },
         });
-      } catch (dbError: any) {
+      } catch (dbError: unknown) {
         // If post creation fails but user is created, log error but don't fail registration
         console.error('Failed to create initial post:', dbError);
       }
     }
 
     return { success: 'Account created successfully!' };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
     // Generic error fallback
-    if (error?.message?.includes("Can't reach database server") || 
-        error?.code === 'P1001') {
+    const err = error as { message?: string; code?: string };
+    if (err?.message?.includes("Can't reach database server") || 
+        err?.code === 'P1001') {
       return { 
         error: 'Database connection failed. Please check your database configuration or contact support.' 
       };

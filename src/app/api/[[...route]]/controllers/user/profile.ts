@@ -97,9 +97,10 @@ const app = new Hono()
           },
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching user profile:', error);
-      if (error?.message?.includes("Can't reach database server") || error?.code === 'P1001') {
+      const err = error as { message?: string; code?: string };
+      if (err?.message?.includes("Can't reach database server") || err?.code === 'P1001') {
         return c.json(
           { message: 'Database connection failed. Please check your database configuration.' },
           503
