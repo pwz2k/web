@@ -20,7 +20,7 @@ const nextConfig = {
   // Increase the build timeout
   staticPageGenerationTimeout: 180, // 3 minutes
 
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Fix for Prisma client resolution
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -33,7 +33,13 @@ const nextConfig = {
         'node_modules/@prisma/client'
       ),
     };
-    
+
+    // Reduce "Cannot read properties of undefined (reading 'call')" in production
+    // by using stable module IDs so chunk references stay valid after deploy
+    if (!isServer && !dev && config.optimization) {
+      config.optimization.moduleIds = 'deterministic';
+    }
+
     // Ensure Prisma client is externalized correctly
     if (isServer) {
       config.externals = config.externals || [];
@@ -41,7 +47,7 @@ const nextConfig = {
         '.prisma/client': 'commonjs .prisma/client',
       });
     }
-    
+
     return config;
   },
 };

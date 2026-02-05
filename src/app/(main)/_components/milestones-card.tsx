@@ -7,9 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { EllipseIcon, MedalAchievedIcon } from '@/icons';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Award, Circle, Loader2 } from 'lucide-react';
 
 const MilestonesCard = () => {
   const { data, isLoading } = useGetMilestones();
@@ -51,9 +50,9 @@ const MilestonesCard = () => {
           >
             <p className='font-semibold'>{milestone.name}</p>
             {!!milestone.achievedAt ? (
-              <MedalAchievedIcon size={24} />
+              <Award size={24} />
             ) : (
-              <EllipseIcon size={24} />
+              <Circle size={24} />
             )}
           </div>
         ))}

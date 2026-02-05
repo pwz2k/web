@@ -10,13 +10,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RadioIcon } from '@/icons';
 import { useUploadThing } from '@/lib/uploadthing';
 import { cn } from '@/lib/utils';
 import { PostSchema } from '@/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDropzone } from '@uploadthing/react';
-import { ImageIcon } from 'lucide-react';
+import { CircleDot, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useTransition } from 'react';
@@ -204,7 +203,7 @@ export default function CreatePostForm() {
         />
 
         <div className='flex items-center gap-2'>
-          <RadioIcon />
+          <CircleDot className='size-5 text-tertiary' />
           <p className='text-white text-sm'>
             By uploading, you agree to our{' '}
             <Link href='#' className='text-tertiary font-bold hover:underline'>

@@ -2,10 +2,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { IMAGE_BLUR_PLACEHOLDER } from '@/constants/image';
 import { useConfirm } from '@/hooks/use-confirm';
-import { RatingIcon, ShareIcon, UpVoteIcon } from '@/icons';
 import { DateToString } from '@/types/helper';
 import { Post } from '@prisma/client';
-import { Share2, StarIcon, Trash } from 'lucide-react';
+import { ArrowBigUp, Share2, Star, Trash } from 'lucide-react';
 import Image from 'next/image';
 import qs from 'query-string';
 import { toast } from 'sonner';
@@ -111,7 +110,7 @@ const PostCard = ({
             quality={82}
           />
           <div className='absolute bottom-2 left-2 z-20 bg-black/70 px-2 py-1 rounded-md flex items-center gap-1'>
-            <StarIcon className='text-tertiary fill-tertiary' size={14} />
+            <Star className='text-tertiary fill-tertiary' size={14} />
             <span className='text-white text-sm font-medium'>
               {post.averageRating.toFixed(1)}
             </span>
@@ -135,15 +134,15 @@ const PostCard = ({
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-1'>
-              <RatingIcon className='fill-tertiary' size={18} />{' '}
+              <Star className='fill-tertiary text-tertiary' size={18} />{' '}
               {post.impressions}
             </div>
             <div className='flex items-center gap-1'>
-              <UpVoteIcon className='fill-green-500' size={18} />{' '}
+              <ArrowBigUp className='fill-green-500 text-green-500' size={18} />{' '}
               {post._count.vote}
             </div>
             <div className='flex items-center gap-1'>
-              <ShareIcon className='fill-white' size={18} /> {post.sharesCount}
+              <Share2 className='text-white' size={18} /> {post.sharesCount}
             </div>
           </div>
           <div className='flex items-center'>

@@ -3,8 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
-import { VerifiedIcon } from '@/icons';
-import { CircleFadingPlus, Loader2, Settings } from 'lucide-react';
+import { BadgeCheck, CircleFadingPlus, Loader2, Settings } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { useGetNextMilestone } from '../_api/use-get-next-milestone';
 import { useGetUserPosts } from '../_api/use-get-user-posts';
@@ -43,7 +42,7 @@ export default function ProfilePage() {
           <div className='space-y-2'>
             <div className='flex items-center justify-center lg:justify-start gap-1'>
               <h5 className='text-white text-2xl font-bold'>{user.name}</h5>
-              <VerifiedIcon />
+              <BadgeCheck className='size-6 text-tertiary' />
             </div>
             <p className='text-muted-foreground text-center lg:text-left'>
               {`Your uploads are better than ${user.stats.percentileStat || 0}% of users.`}

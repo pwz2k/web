@@ -1,6 +1,11 @@
 'use client';
 
 import { login, loginWithFormData } from '@/actions/login';
+
+/** Form action fallback when client JS fails; cast so form action type (void) is satisfied. */
+const signInFormAction = loginWithFormData as unknown as (
+  formData: FormData
+) => Promise<void>;
 import { FormError } from '@/components/form-error';
 import { FormSuccess } from '@/components/form-success';
 import { PasswordInput } from '@/components/password-input';
@@ -62,7 +67,7 @@ export default function SignInForm() {
     <Form {...form}>
       <form
         className='space-y-6'
-        action={loginWithFormData as (formData: FormData) => Promise<void>}
+        action={signInFormAction}
         method='post'
         onSubmit={form.handleSubmit(onSubmit)}
       >

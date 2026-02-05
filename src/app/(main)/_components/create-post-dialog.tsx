@@ -7,9 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { SuccessIcon } from '@/icons';
 import { cn } from '@/lib/utils';
-import { ImageOff, Loader2 } from 'lucide-react';
+import { CheckCircle, ImageOff, Loader2 } from 'lucide-react';
 import { useNewPost } from '../_hooks/use-new-post';
 import CreatePostForm from './create-post-form';
 
@@ -22,7 +21,7 @@ const CreatePostDialog = () => {
         {status === 'success' && (
           <div className='min-h-40 py-20 flex items-center justify-center'>
             <div className='max-w-md flex flex-col items-center justify-center text-center space-y-2'>
-              <SuccessIcon size={70} />
+              <CheckCircle className='text-tertiary' size={70} />
               <p className='font-bold text-2xl'>
                 Photo Uploaded Successfully! <br /> Keep it up!
               </p>
