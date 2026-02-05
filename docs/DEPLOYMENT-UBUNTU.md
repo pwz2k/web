@@ -105,6 +105,8 @@ openssl rand -base64 32
 
 **Important:** For DigitalOcean DB, upload `ca-certificate.crt` to the server and set `sslrootcert` in `DATABASE_URL` to its full path (e.g. `/var/www/web/ca-certificate.crt`).
 
+**Auth.js (NextAuth):** The app is configured with `trustHost: true` so it works behind Nginx. If you see `UntrustedHost` in logs, ensure `NEXT_PUBLIC_APP_URL` matches the URL users use (e.g. `https://pyp6.com`).
+
 ---
 
 ## 4. Database

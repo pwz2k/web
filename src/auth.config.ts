@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 
 export default {
   secret: process.env.AUTH_SECRET,
+  trustHost: true, // Required when behind Nginx/reverse proxy (e.g. pyp6.com, IP)
   providers: [
     Credentials({
       name: 'credentials',
