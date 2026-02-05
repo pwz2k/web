@@ -1,6 +1,6 @@
 import UserAvatar from '@/components/user-avatar';
 import { useUploadThing } from '@/lib/uploadthing';
-import { CameraPlus } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { DateToString } from '@/types/helper';
 import { useDropzone } from '@uploadthing/react';
 import { User } from 'next-auth';
@@ -77,7 +77,7 @@ const EditProfilePic = ({
       />
       <div className='absolute right-1 bottom-3'>
         <div className='flex items-center justify-center p-1.5 bg-tertiary text-tertiary-foreground rounded-full hover:bg-tertiary/90 transition-colors'>
-          <CameraPlus className='size-4' />
+          <ImagePlus className='size-4' />
         </div>
       </div>
       {isDragActive && (
