@@ -62,7 +62,7 @@ export default function SignInForm() {
     <Form {...form}>
       <form
         className='space-y-6'
-        action={loginWithFormData}
+        action={loginWithFormData as (formData: FormData) => Promise<void>}
         method='post'
         onSubmit={form.handleSubmit(onSubmit)}
       >
