@@ -7,6 +7,7 @@ import { LoginSchema } from './schemas';
 import bcrypt from 'bcryptjs';
 
 export default {
+  secret: process.env.AUTH_SECRET,
   providers: [
     Credentials({
       name: 'credentials',

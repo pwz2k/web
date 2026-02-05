@@ -36,9 +36,9 @@ const app = new Hono()
         // Get user from auth
         const user = await currentUser();
 
-      // Build base filter - this is used for both count and fetch queries
+      // Build base filter - show APPROVED and PENDING (so existing/moderated posts appear)
       const baseFilter: any = {
-        approvalStatus: 'APPROVED',
+        approvalStatus: { in: ['APPROVED', 'PENDING'] },
       };
 
       // Add preference filter if provided
@@ -508,7 +508,7 @@ const app = new Hono()
             },
           },
           {
-            approvalStatus: 'APPROVED',
+            approvalStatus: { in: ['APPROVED', 'PENDING'] },
           },
         ],
       },
@@ -630,7 +630,7 @@ const app = new Hono()
         where: {
           AND: [
             {
-              approvalStatus: 'APPROVED',
+              approvalStatus: { in: ['APPROVED', 'PENDING'] },
             },
             {
               id: {

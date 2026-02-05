@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardTitle } from '@/components/ui/card';
+import { IMAGE_BLUR_PLACEHOLDER } from '@/constants/image';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
@@ -106,6 +107,10 @@ function TopUsers() {
                 }
                 fill
                 sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                loading='lazy'
+                placeholder='blur'
+                blurDataURL={IMAGE_BLUR_PLACEHOLDER}
+                quality={82}
               />
             </Link>
             <span

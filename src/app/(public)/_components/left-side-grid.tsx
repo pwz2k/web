@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { voteButtonColors } from '@/constants/vote-buttons';
-import { QrIcon } from '@/icons';
+import { QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Gender } from '@prisma/client';
 import Link from 'next/link';
@@ -13,8 +13,7 @@ import { usePosts } from '../_hooks/post-context';
 import { useActivePostIndex } from '../_hooks/use-active-post-index';
 import { useQueryParams } from '../_hooks/use-query-params';
 
-const 
-LeftSideGrid = () => {
+const LeftSideGrid = () => {
   const { setQueryParam, getQueryParam, removeQueryParam } = useQueryParams();
   const { posts } = usePosts();
   const { index } = useActivePostIndex();
@@ -146,7 +145,7 @@ LeftSideGrid = () => {
         <CardContent className='p-0 space-y-4'>
           <h5 className='text-base text-white/90'>Downloads the app</h5>
           <div className='p-2 border-2 border-white/20 rounded inline-block'>
-            <QrIcon />
+            <QrCode size={87} />
           </div>
         </CardContent>
         <CardFooter className='p-0 flex-col space-y-2'>

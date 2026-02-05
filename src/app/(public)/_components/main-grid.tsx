@@ -3,6 +3,7 @@
 import { useGetUserProfile } from '@/app/(main)/_api/use-get-user-profile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { IMAGE_BLUR_PLACEHOLDER } from '@/constants/image';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
@@ -148,7 +149,11 @@ const MainGrid = () => {
                     )}
                     fill
                     sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-                    priority={true}
+                    priority={idx <= 1}
+                    loading={idx <= 1 ? undefined : 'lazy'}
+                    placeholder='blur'
+                    blurDataURL={IMAGE_BLUR_PLACEHOLDER}
+                    quality={82}
                   />
 
                   {isActive && (

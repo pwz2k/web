@@ -24,10 +24,15 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # local env files
-.env*.local
 .env
+.env*.local
+.env.development
+.env.production
+.env.test
+.env.backup
 
 # vercel
 .vercel
@@ -35,9 +40,40 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# certificates & secrets
 certificates
+ca-certificate.crt
+*.crt
+*.key
+*.pem
 
-# prisma build
+# prisma
 src/prisma/
+prisma/migrations/**/migration_lock.toml
 
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# archive
 code.zip
+*.zip
+*.tar.gz

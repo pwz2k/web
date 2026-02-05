@@ -85,7 +85,7 @@ model User {
   Notification    Notification[]
   PostImpression  PostImpression[]
   ReportUpdateLog ReportUpdateLog[]
- @@map("users")
+ @@map("User")
 }
 
 model UserActivityLog {
@@ -125,7 +125,7 @@ model Post {
   Reports        Reports[]
   Tip            Tip[]
   PostImpression PostImpression[]
-@@map("posts")
+  @@map("Post")
 }
 
 model PostImpression {
@@ -173,8 +173,7 @@ model Vote {
 
   @@index([postId, voterId, ipAddress])
   @@index([createdAt])
-  @@map("votes")
-
+  @@map("Vote")
 }
 
 model ModeratorApplication {
@@ -207,7 +206,7 @@ model Comment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-@@map("comments")
+  @@map("Comment")
 }
 
 model Reports {

@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { IMAGE_BLUR_PLACEHOLDER } from '@/constants/image';
 import { useConfirm } from '@/hooks/use-confirm';
 import { RatingIcon, ShareIcon, UpVoteIcon } from '@/icons';
 import { DateToString } from '@/types/helper';
@@ -103,6 +104,11 @@ const PostCard = ({
             alt={post.caption || 'user post'}
             className='rounded-sm object-cover'
             fill
+            sizes='(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'
+            loading='lazy'
+            placeholder='blur'
+            blurDataURL={IMAGE_BLUR_PLACEHOLDER}
+            quality={82}
           />
           <div className='absolute bottom-2 left-2 z-20 bg-black/70 px-2 py-1 rounded-md flex items-center gap-1'>
             <StarIcon className='text-tertiary fill-tertiary' size={14} />

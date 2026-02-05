@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import UserAvatar from '@/components/user-avatar';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { SendIcon } from '@/icons';
+import { Send } from 'lucide-react';
 import { commentSchema } from '@/schemas';
 import { useEffect } from 'react';
 import { useCreateComment } from '../_api/use-create-comment';
@@ -63,7 +63,7 @@ export function CommentInput({ postId }: { postId?: string }) {
                   />
                 </FormControl>
                 <button type='submit' className='cursor-pointer'>
-                  <SendIcon className='size-8' />
+                  <Send className='size-8' />
                 </button>
               </div>
               <div className="p-1 text-centers">

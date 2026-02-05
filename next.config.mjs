@@ -15,6 +15,7 @@ const nextConfig = {
         pathname: '/f/**',
       },
     ],
+    minimumCacheTTL: 60,
   },
   // Increase the build timeout
   staticPageGenerationTimeout: 180, // 3 minutes
