@@ -18,7 +18,7 @@ if (process.env.BITPAY_MERCHANT_ID && process.env.BITPAY_PRIVATE_KEY) {
   } catch (error) {
     console.warn('Failed to initialize BitPay client:', error);
   }
-} else {
+} else if (process.env.NODE_ENV === 'development') {
   console.warn('BitPay environment variables not set. BitPay features will be disabled.');
 }
 

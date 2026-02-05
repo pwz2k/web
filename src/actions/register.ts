@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import bcrpyt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import * as z from 'zod';
 
 import { getUserByEmail } from '@/data/user';
@@ -29,7 +29,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
       return { error: 'Passwords do not match!' };
     }
 
-    const hashedPassword = await bcrpyt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     let existingUser;
     try {
