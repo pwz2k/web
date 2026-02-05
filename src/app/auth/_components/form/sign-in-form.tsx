@@ -1,6 +1,6 @@
 'use client';
 
-import { login } from '@/actions/login';
+import { login, loginWithFormData } from '@/actions/login';
 import { FormError } from '@/components/form-error';
 import { FormSuccess } from '@/components/form-success';
 import { PasswordInput } from '@/components/password-input';
@@ -60,7 +60,15 @@ export default function SignInForm() {
 
   return (
     <Form {...form}>
-      <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className='space-y-6'
+        action={loginWithFormData}
+        method='post'
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        {callbackUrl ? (
+          <input type='hidden' name='callbackUrl' value={callbackUrl} />
+        ) : null}
         <FormField
           control={form.control}
           name='email'
@@ -70,9 +78,11 @@ export default function SignInForm() {
                 <Input
                   {...field}
                   type='email'
+                  name='email'
                   placeholder='Email'
                   disabled={isPending}
                   className='rounded-full border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl'
+                  autoComplete='email'
                 />
               </FormControl>
               <FormMessage />
@@ -87,9 +97,11 @@ export default function SignInForm() {
               <FormControl>
                 <PasswordInput
                   {...field}
+                  name='password'
                   placeholder='Password'
                   className='rounded-full border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl'
                   disabled={isPending}
+                  autoComplete='current-password'
                 />
               </FormControl>
               <FormMessage />

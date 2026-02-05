@@ -9,6 +9,14 @@ import { LoginSchema } from '@/schemas';
 
 import { getUserByEmail } from '@/data/user';
 
+/** For form action fallback when client JS does not load (e.g. production) */
+export const loginWithFormData = async (formData: FormData) => {
+  const email = (formData.get('email') as string)?.trim() || '';
+  const password = (formData.get('password') as string) || '';
+  const callbackUrl = (formData.get('callbackUrl') as string) || null;
+  return login({ email, password }, callbackUrl);
+};
+
 export const login = async (
   values: z.infer<typeof LoginSchema>,
   callbackUrl?: string | null
