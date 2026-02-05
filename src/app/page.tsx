@@ -40,16 +40,13 @@ export default function HomePage() {
       <SwiperProvider>
         <PostsProvider>
           <div className='grid grid-cols-1 xl:grid-cols-5'>
-            <div className='hidden xl:block'>
+            <div className='order-2 xl:order-1'>
               <LeftSideGrid />
             </div>
-            <div className='overflow-x-hidden lg:col-span-3'>
+            <div className='order-1 overflow-x-hidden lg:col-span-3 xl:order-2'>
               <MainGrid />
             </div>
-            <div className='xl:hidden'>
-              <LeftSideGrid />
-            </div>
-            <div>
+            <div className='order-3'>
               <RightSideGrid />
             </div>
           </div>

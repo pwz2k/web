@@ -103,7 +103,7 @@ openssl rand -base64 32
 - `BITPAY_MERCHANT_ID`, `BITPAY_PRIVATE_KEY`
 - `PAYMENT_STATUS` (e.g. `LIVE` or `TEST`)
 
-**Important:** For DigitalOcean DB, upload `ca-certificate.crt` to the server and set `sslrootcert` in `DATABASE_URL` to its full path (e.g. `/var/www/uploto/ca-certificate.crt`).
+**Important:** For DigitalOcean DB, upload `ca-certificate.crt` to the server and set `sslrootcert` in `DATABASE_URL` to its full path (e.g. `/var/www/web/ca-certificate.crt`).
 
 ---
 
