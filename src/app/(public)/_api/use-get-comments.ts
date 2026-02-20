@@ -7,6 +7,7 @@ export const useGetComments = (id?: string) => {
   const query = useQuery({
     enabled: !!id,
     queryKey: [QUERY_KEYS.GET_COMMENTS_BY_POST, { id }],
+    staleTime: 45 * 1000, // 45s: comments don't change every second
     queryFn: async () => {
       const response = await client.api.comment[':postId']['$get']({
         param: { postId: id },

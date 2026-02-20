@@ -6,6 +6,7 @@ import { client } from '@/lib/hono';
 export const useGetTopUsers = () => {
   const query = useQuery({
     queryKey: [QUERY_KEYS.TOP_USERS],
+    staleTime: 2 * 60 * 1000, // 2 min: top creators list changes slowly
     queryFn: async () => {
       const response = await client.api.post['top-creators-today']['$get']();
 

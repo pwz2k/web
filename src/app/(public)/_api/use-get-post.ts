@@ -7,6 +7,7 @@ export const useGetPost = (id?: string) => {
   const query = useQuery({
     enabled: !!id,
     queryKey: [QUERY_KEYS.POST, { id }],
+    staleTime: 30 * 1000, // 30s: avoid refetch on every slide change (DB in different region)
     queryFn: async () => {
       const response = await client.api.post[':id']['$get']({ param: { id } });
 

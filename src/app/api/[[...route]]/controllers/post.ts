@@ -89,7 +89,7 @@ const app = new Hono()
           },
           select: { postId: true, viewedAt: true },
           orderBy: { viewedAt: 'desc' },
-          take: 200, // Limit how many impressions we consider
+          take: 50, // Limit impressions for faster feed (Hostinger ↔ DigitalOcean DB)
         });
 
         // Create a map for faster lookups
@@ -134,11 +134,10 @@ const app = new Hono()
         requestedPost = await db.post.findFirst({
           where: { AND: [{ id }, { creatorId: { not: user?.id } }] },
           include: {
-            creator: true,
+            creator: { select: { id: true, gender: true, name: true, image: true, username: true } },
             _count: { select: { vote: true } },
-            comment: true,
             vote: {
-              include: { voter: true },
+              include: { voter: { select: { id: true, name: true, image: true } } },
               take: 3,
             },
           },
@@ -150,24 +149,40 @@ const app = new Hono()
       const [candidatePosts, total] = await Promise.all([
         db.post.findMany({
           where: authFilter,
-          include: {
+          select: {
+            id: true,
+            caption: true,
+            tags: true,
+            image: true,
+            approvalStatus: true,
+            averageRating: true,
+            totalVotes: true,
+            weightedRating: true,
+            ratingDistribution: true,
+            impressions: true,
+            sharesCount: true,
+            creatorId: true,
+            createdAt: true,
+            updatedAt: true,
             creator: {
-              select: { id: true, gender: true, name: true, image: true },
+              select: { id: true, gender: true, name: true, image: true, username: true },
             },
             _count: { select: { vote: true } },
-            comment: true,
             vote: {
-              include: {
+              select: {
+                id: true,
+                voterId: true,
+                ipAddress: true,
                 voter: { select: { id: true, name: true, image: true } },
               },
               take: 3,
             },
           },
-          take: Math.min(limit * fetchMultiplier, 100), // Cap at 100 to prevent excessive DB load
+          take: Math.min(limit * fetchMultiplier, 100),
           skip,
           orderBy: [
-            { createdAt: 'desc' }, // Prioritize newer content
-            { weightedRating: 'desc' }, // Higher rated content
+            { createdAt: 'desc' },
+            { weightedRating: 'desc' },
           ],
         }),
         db.post.count({ where: authFilter }),
@@ -195,20 +210,36 @@ const app = new Hono()
 
           randomPosts = await db.post.findMany({
             where: randomFilter,
-            include: {
+            select: {
+              id: true,
+              caption: true,
+              tags: true,
+              image: true,
+              approvalStatus: true,
+              averageRating: true,
+              totalVotes: true,
+              weightedRating: true,
+              ratingDistribution: true,
+              impressions: true,
+              sharesCount: true,
+              creatorId: true,
+              createdAt: true,
+              updatedAt: true,
               creator: {
-                select: { id: true, gender: true, name: true, image: true },
+                select: { id: true, gender: true, name: true, image: true, username: true },
               },
               _count: { select: { vote: true } },
-              comment: true,
               vote: {
-                include: {
+                select: {
+                  id: true,
+                  voterId: true,
+                  ipAddress: true,
                   voter: { select: { id: true, name: true, image: true } },
                 },
                 take: 3,
               },
             },
-            take: limit * 2, // Fetch more than needed for diversity algorithm
+            take: limit * 2,
             skip: randomSkip,
           });
 
