@@ -315,6 +315,8 @@ Follow the prompts. Certbot will adjust your Nginx config for HTTPS. Set `NEXT_P
 
 ---
 
+**Performance (app on Hostinger VPS, DB on DigitalOcean):** The app is tuned for cross-region DB: feed API uses a lean `select` (no comments, minimal fields), impression history is capped, and the feed is cached for 1 minute. Apply DB indexes for faster feed queries: `npx prisma migrate deploy` (or `db push` if you don’t use migrations). Images are URLs (e.g. UploadThing); Next.js caches optimized images for 5 minutes.
+
 For issues, check:
 
 - App logs: `pm2 logs uploto` or `docker logs uploto`

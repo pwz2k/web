@@ -6,6 +6,7 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Note: optimizePackageImports was removed – it can trigger "reading 'call'" with some chunk splits in dev.
   images: {
     remotePatterns: [
       {
@@ -15,7 +16,7 @@ const nextConfig = {
         pathname: '/f/**',
       },
     ],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 300, // 5 min cache for remote images (faster repeat loads)
   },
   // Increase the build timeout
   staticPageGenerationTimeout: 180, // 3 minutes

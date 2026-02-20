@@ -15,6 +15,7 @@ export class RootErrorBoundary extends Component<Props, State> {
     const message = error instanceof Error ? error.message : String(error);
     const isChunkError =
       /Cannot read properties of undefined \(reading 'call'\)/.test(message) ||
+      /reading 'call'|options\.factory/.test(message) ||
       /ChunkLoadError|Loading chunk \d+ failed/.test(message) ||
       /Failed to fetch dynamically imported module/.test(message);
     return { hasError: true, isChunkError: !!isChunkError };
