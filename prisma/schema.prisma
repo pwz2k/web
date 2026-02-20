@@ -126,8 +126,6 @@ model Post {
   Tip            Tip[]
   PostImpression PostImpression[]
 
-  @@index([approvalStatus, createdAt(sort: Desc)])
-  @@index([creatorId])
   @@map("Post")
 }
 
