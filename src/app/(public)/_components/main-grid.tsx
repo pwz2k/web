@@ -148,12 +148,12 @@ const MainGrid = () => {
                       isActive ? 'opacity-100' : 'opacity-50'
                     )}
                     fill
-                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-                    priority={idx <= 1}
-                    loading={idx <= 1 ? undefined : 'lazy'}
+                    sizes='(max-width: 768px) 100vw, 640px'
+                    priority={idx === 0}
+                    loading={idx === 0 ? undefined : 'lazy'}
                     placeholder='blur'
                     blurDataURL={IMAGE_BLUR_PLACEHOLDER}
-                    quality={82}
+                    quality={75}
                   />
 
                   {isActive && (
@@ -215,7 +215,7 @@ const MainGrid = () => {
                       isActive ? 'opacity-100' : 'opacity-50'
                     )}
                     fill
-                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                    sizes='(max-width: 768px) 100vw, 640px'
                   />
                 </div>
               )}
