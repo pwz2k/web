@@ -17,9 +17,9 @@ const VoteBar = () => {
 
   const { index: activePostIndex } = useActivePostIndex();
 
-  const { data: activePost, isLoading } = useGetPost(
-    posts?.[activePostIndex].id
-  );
+  const activePostId = posts?.[activePostIndex]?.id;
+
+  const { data: activePost, isLoading } = useGetPost(activePostId);
 
   const { mutate: votePost, isPending: isVoting } = useVotePost(activePost?.id);
 

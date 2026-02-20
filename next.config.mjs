@@ -16,7 +16,10 @@ const nextConfig = {
         pathname: '/f/**',
       },
     ],
-    minimumCacheTTL: 300, // 5 min cache for remote images (faster repeat loads)
+    minimumCacheTTL: 600, // 10 min cache for remote images (faster repeat loads)
+    // Smaller image sizes so Next serves smaller files = faster load
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 640],
   },
   // Increase the build timeout
   staticPageGenerationTimeout: 180, // 3 minutes

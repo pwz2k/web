@@ -42,7 +42,8 @@ const RightSideGrid = () => {
                   className='object-cover w-full h-full rounded-3xl border-2 border-white/20'
                   width={123}
                   height={163}
-                  sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                  sizes='160px'
+                  quality={75}
                 />
               </div>
               <div className='flex flex-col text-center'>
@@ -106,11 +107,11 @@ function TopUsers() {
                   'object-cover w-full h-full rounded-3xl border-2 border-white/20'
                 }
                 fill
-                sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                sizes='(max-width: 768px) 50vw, 200px'
                 loading='lazy'
                 placeholder='blur'
                 blurDataURL={IMAGE_BLUR_PLACEHOLDER}
-                quality={82}
+                quality={75}
               />
             </Link>
             <span

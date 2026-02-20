@@ -36,7 +36,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               window.__webpackRecovery = function(msg) {
-                if (/(reading 'call'|ChunkLoadError|Loading chunk \\d+ failed|dynamically imported|options\\.factory)/.test(msg || '')) {
+                if (/(reading 'call'|ChunkLoadError|Loading chunk .* failed|timeout.*layout|dynamically imported|options\\.factory)/.test(msg || '')) {
                   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;font-family:system-ui;background:#0a0a0a;color:#fff;text-align:center;gap:16px">' +
                     '<p style="font-size:1.125rem">Something went wrong loading the page.</p>' +
                     '<p style="font-size:0.875rem;color:#888">Try refreshing. If it continues, clear your browser cache.</p>' +
