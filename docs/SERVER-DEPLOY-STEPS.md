@@ -127,3 +127,24 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000
 ---
 
 **Note:** You do **not** need to run `prisma db push` on the server if the database schema is already applied (e.g. you ran it locally). Only run it on the server if you are applying schema changes from there.
+
+---
+
+## Fix voting 500 (permission denied for sequence Vote_id_seq)
+
+If voting returns 500 and logs show `permission denied for sequence Vote_id_seq`, run the sequence fix **once** on the server as the postgres superuser.
+
+**If PostgreSQL is on the same server:**
+
+```bash
+cd /var/www/web
+sudo -u postgres psql -d myapp_db -f prisma/scripts/grant-sequences-hostinger.sql
+```
+
+If your Postgres listens on port 5433:
+
+```bash
+sudo -u postgres psql -p 5433 -d myapp_db -f prisma/scripts/grant-sequences-hostinger.sql
+```
+
+Then restart the app: `pm2 restart web`. See also `docs/DATABASE-HOSTINGER.md` (Options 1–4).

@@ -8,7 +8,7 @@ interface LogoutButtonProps {
 
 export const LogoutButton = ({ children }: LogoutButtonProps) => {
   const onClick = async () => {
-    await signOut();
+    await signOut({ callbackUrl: '/', redirect: true });
   };
 
   return (

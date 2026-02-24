@@ -23,6 +23,11 @@ export const useCreateComment = (postId?: string) => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          const err = new Error('Unauthorized') as Error & { statusCode?: number };
+          err.statusCode = 401;
+          throw err;
+        }
         throw new Error('Failed to submit the comment');
       }
 
@@ -34,7 +39,11 @@ export const useCreateComment = (postId?: string) => {
       });
       toast.success('comment submitted Successfully!');
     },
-    onError: () => {
+    onError: (error: Error & { statusCode?: number }) => {
+      if (error?.statusCode === 401) {
+        toast.error('Please sign in to comment.');
+        return;
+      }
       toast.error('Failed to submit the comment!');
     },
   });

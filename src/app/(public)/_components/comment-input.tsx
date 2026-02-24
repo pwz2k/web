@@ -44,6 +44,8 @@ export function CommentInput({ postId }: { postId?: string }) {
     form.reset();
   }, [postId, form]);
 
+  const canSubmit = !!postId && !isPending;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
@@ -62,7 +64,11 @@ export function CommentInput({ postId }: { postId?: string }) {
                     {...field}
                   />
                 </FormControl>
-                <button type='submit' className='cursor-pointer'>
+                <button
+                  type='submit'
+                  className='cursor-pointer disabled:opacity-50'
+                  disabled={!canSubmit}
+                >
                   <Send className='size-8' />
                 </button>
               </div>

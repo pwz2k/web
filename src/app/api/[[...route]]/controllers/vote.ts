@@ -565,138 +565,148 @@ const app = new Hono().post(
   zValidator('param', z.object({ id: z.string().optional() })),
   zValidator('json', voteSchema),
   async (c) => {
-    const { id } = c.req.valid('param');
-    const { rating } = c.req.valid('json');
-    const ipAddress = c.req.header('x-forwarded-for') || 'unknown';
+    try {
+      const { id } = c.req.valid('param');
+      const { rating } = c.req.valid('json');
+      const ipAddress = c.req.header('x-forwarded-for') || 'unknown';
 
-    if (!id) {
-      return c.json({ message: 'Post ID is required!' }, 400);
-    }
+      if (!id) {
+        return c.json({ message: 'Post ID is required!' }, 400);
+      }
 
-    const user = await currentUser();
+      const user = await currentUser();
 
-    // Check if anonymous user has reached daily vote limit
-    if (!user && hasReachedDailyVoteLimit()) {
-      return c.json(
-        {
-          message: 'Daily vote limit reached. Please sign in to continue voting.',
-          redirectToSignIn: true,
-          redirectUrl: DEFAULT_SIGN_IN_PATH,
+      // Check if anonymous user has reached daily vote limit
+      if (!user && hasReachedDailyVoteLimit()) {
+        return c.json(
+          {
+            message: 'Daily vote limit reached. Please sign in to continue voting.',
+            redirectToSignIn: true,
+            redirectUrl: DEFAULT_SIGN_IN_PATH,
+          },
+          403
+        );
+      }
+
+      const post = await db.post.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          creator: { select: { id: true } },
         },
-        403
-      );
-    }
+      });
 
-    const post = await db.post.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        creator: { select: { id: true } },
-      },
-    });
+      if (!post) {
+        return c.json({ message: 'Post not found!' }, 404);
+      }
 
-    if (!post) {
-      return c.json({ message: 'Post not found!' }, 404);
-    }
+      if (user?.id === post.creator.id) {
+        return c.json({ message: 'You cannot vote on your own post!' }, 403);
+      }
 
-    if (user?.id === post.creator.id) {
-      return c.json({ message: 'You cannot vote on your own post!' }, 403);
-    }
+      const { isDuplicate } = await checkDuplicateVote(id, ipAddress, user?.id);
 
-    const { isDuplicate } = await checkDuplicateVote(id, ipAddress, user?.id);
+      if (isDuplicate) {
+        return c.json(
+          {
+            message: `You have already voted on this post!`,
+          },
+          429
+        );
+      }
 
-    if (isDuplicate) {
-      return c.json(
-        {
-          message: `You have already voted on this post!`,
-        },
-        429
-      );
-    }
+      // Calculate vote weight and factors
+      let finalWeight: number;
+      let weightFactors: {
+        baseWeight: number;
+        demographicWeight?: number;
+        patternWeight?: number;
+        details?: Record<string, unknown>;
+      };
 
-    // Calculate vote weight and factors
-    let finalWeight: number;
-    let weightFactors: {
-      baseWeight: number;
-      demographicWeight?: number;
-      patternWeight?: number;
-      details?: Record<string, unknown>;
-    };
+      // For registered users, compute detailed weight factors
+      if (user?.id) {
+        const [baseWeightResult, demographicWeightResult] = await Promise.all([
+          calculateBaseWeight(user.id),
+          calculateDemographicWeight(post.creator.id, rating, user.id),
+        ]);
 
-    // For registered users, compute detailed weight factors
-    if (user?.id) {
-      const [baseWeightResult, demographicWeightResult] = await Promise.all([
-        calculateBaseWeight(user.id),
-        calculateDemographicWeight(post.creator.id, rating, user.id),
+        const votePattern = await analyzeVotePattern(user.id);
+        const patternAdjustment = calculatePatternAdjustment(votePattern);
+
+        finalWeight = Number(
+          (
+            baseWeightResult.weight *
+            demographicWeightResult.weight *
+            patternAdjustment.patternWeight
+          ).toFixed(3)
+        );
+
+        weightFactors = {
+          baseWeight: baseWeightResult.weight,
+          demographicWeight: demographicWeightResult.weight,
+          patternWeight: patternAdjustment.patternWeight,
+          details: {
+            base: baseWeightResult.factors,
+            demographic: demographicWeightResult.factors,
+            pattern: patternAdjustment.factors,
+            votePattern: votePattern,
+          },
+        };
+      } else {
+        finalWeight = calculateAnonymousWeight();
+        weightFactors = {
+          baseWeight: finalWeight,
+          details: { anonymous: true },
+        };
+      }
+
+      // Log the vote details.
+      // For this example, userWeight and contextWeight are defaulted to 1.0.
+      await Promise.all([
+        logVoteDetails(
+          rating,
+          finalWeight,
+          post.id,
+          user?.id || null,
+          ipAddress,
+          'DIRECT',
+          false,
+          weightFactors.baseWeight,
+          1.0,
+          1.0
+        ),
+        updateRatingDistribution(post.id, rating, finalWeight),
+        user?.id ? updateUserMetrics(user.id, rating) : Promise.resolve(null),
       ]);
 
-      const votePattern = await analyzeVotePattern(user.id);
-      const patternAdjustment = calculatePatternAdjustment(votePattern);
+      if (user?.id) {
+        // Track activity for authenticated users
+        await logUserActivity(user.id, 'VOTE', {
+          postId: post.id,
+          rating,
+          weight: finalWeight,
+        });
+      } else {
+        // Track vote for anonymous users in cookies
+        saveAnonymousVote(post.id);
+      }
 
-      finalWeight = Number(
-        (
-          baseWeightResult.weight *
-          demographicWeightResult.weight *
-          patternAdjustment.patternWeight
-        ).toFixed(3)
-      );
-
-      weightFactors = {
-        baseWeight: baseWeightResult.weight,
-        demographicWeight: demographicWeightResult.weight,
-        patternWeight: patternAdjustment.patternWeight,
-        details: {
-          base: baseWeightResult.factors,
-          demographic: demographicWeightResult.factors,
-          pattern: patternAdjustment.factors,
-          votePattern: votePattern,
-        },
-      };
-    } else {
-      finalWeight = calculateAnonymousWeight();
-      weightFactors = {
-        baseWeight: finalWeight,
-        details: { anonymous: true },
-      };
-    }
-
-    // Log the vote details.
-    // For this example, userWeight and contextWeight are defaulted to 1.0.
-    await Promise.all([
-      logVoteDetails(
-        rating,
-        finalWeight,
-        post.id,
-        user?.id || null,
-        ipAddress,
-        'DIRECT',
-        false,
-        weightFactors.baseWeight,
-        1.0,
-        1.0
-      ),
-      updateRatingDistribution(post.id, rating, finalWeight),
-      user?.id ? updateUserMetrics(user.id, rating) : Promise.resolve(null),
-    ]);
-
-    if (user?.id) {
-      // Track activity for authenticated users
-      await logUserActivity(user.id, 'VOTE', {
-        postId: post.id,
-        rating,
+      return c.json({
+        success: true,
+        message: 'Vote submitted successfully!',
         weight: finalWeight,
+        factors: weightFactors,
       });
-    } else {
-      // Track vote for anonymous users in cookies
-      saveAnonymousVote(post.id);
+    } catch (error) {
+      console.error('[vote] Error submitting vote:', error);
+      const message = error instanceof Error ? error.message : 'Internal server error';
+      const code = (error as { code?: string })?.code;
+      return c.json(
+        { message: code === 'P1001' ? 'Database connection failed. Try again.' : 'Failed to submit vote. Please try again.' },
+        500
+      );
     }
-
-    return c.json({
-      success: true,
-      message: 'Vote submitted successfully!',
-      weight: finalWeight,
-      factors: weightFactors,
-    });
   }
 );
 

@@ -9,6 +9,23 @@ import { Hono } from 'hono';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
+type CacheEntry<T> = { value: T; expiresAt: number };
+const memCache = new Map<string, CacheEntry<unknown>>();
+
+function getCached<T>(key: string): T | undefined {
+  const entry = memCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    memCache.delete(key);
+    return undefined;
+  }
+  return entry.value as T;
+}
+
+function setCached<T>(key: string, value: T, ttlMs: number) {
+  memCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+}
+
 const app = new Hono()
   .get(
     '/',
@@ -146,8 +163,7 @@ const app = new Hono()
 
       // First try to get posts that user hasn't seen
       const fetchMultiplier = 5; // Fetch 5x the posts we need
-      const [candidatePosts, total] = await Promise.all([
-        db.post.findMany({
+      const candidatePosts = await db.post.findMany({
           where: authFilter,
           select: {
             id: true,
@@ -184,9 +200,7 @@ const app = new Hono()
             { createdAt: 'desc' },
             { weightedRating: 'desc' },
           ],
-        }),
-        db.post.count({ where: authFilter }),
-      ]);
+        });
 
       // If no unseen posts are available, get random posts
       let randomPosts: any[] = [];
@@ -445,30 +459,30 @@ const app = new Hono()
         });
       }
 
-      // Batch update impressions in a single transaction
+      // Update impressions in the background (avoid slowing down feed response)
       const newlySeenPostIds = finalPosts.map((post) => post.id);
-      await db.$transaction(async (tx) => {
-        // Bulk update impression counts
-        if (newlySeenPostIds.length > 0) {
-          await tx.post.updateMany({
-            where: { id: { in: newlySeenPostIds } },
-            data: { impressions: { increment: 1 } },
-          });
-        }
+      if (newlySeenPostIds.length > 0) {
+        void db
+          .$transaction(async (tx) => {
+            await tx.post.updateMany({
+              where: { id: { in: newlySeenPostIds } },
+              data: { impressions: { increment: 1 } },
+            });
 
-        // Record impressions for authenticated users
-        if (user && newlySeenPostIds.length > 0) {
-          const now = new Date();
-          await tx.postImpression.createMany({
-            data: newlySeenPostIds.map((postId) => ({
-              postId,
-              userId: user.id,
-              viewedAt: now,
-            })),
-            skipDuplicates: true,
-          });
-        }
-      });
+            if (user) {
+              const now = new Date();
+              await tx.postImpression.createMany({
+                data: newlySeenPostIds.map((postId) => ({
+                  postId,
+                  userId: user.id,
+                  viewedAt: now,
+                })),
+                skipDuplicates: true,
+              });
+            }
+          })
+          .catch((err) => console.error('Error updating impressions:', err));
+      }
 
       // Update cookie for anonymous users
       if (!user) {
@@ -501,12 +515,13 @@ const app = new Hono()
         return cleanPost;
       });
 
-      const hasMore = usedRandomFallback ? false : skip + limit < total;
+      // Avoid an extra COUNT query (big perf win on remote DB)
+      const hasMore = usedRandomFallback ? false : finalPosts.length >= limit;
 
         return c.json({
           data: cleanPosts,
-          hasMore: true,
-          nextPage: !hasMore ? 1 : usedRandomFallback ? 1 : page + 1,
+          hasMore,
+          nextPage: hasMore ? page + 1 : 1,
           isRandomized: usedRandomFallback,
         });
         } catch (error: unknown) {
@@ -524,58 +539,69 @@ const app = new Hono()
   )
   .get('/top-creators-today', async (c) => {
     try {
+      const cacheKey = `top-creators-today:${new Date()
+        .toISOString()
+        .slice(0, 10)}`;
+      const cached = getCached<unknown>(cacheKey);
+      if (cached) return c.json(cached);
+
       // Get the start and end of the current day
       const todayStart = startOfDay(new Date());
       const todayEnd = endOfDay(new Date());
 
-      // First, get all posts updated today with their engagement metrics
+      // Perf: sample the top N posts for today (avoid scanning all today's posts)
       const todayPosts = await db.post.findMany({
-      where: {
-        AND: [
-          {
-            updatedAt: {
-              gte: todayStart,
-              lte: todayEnd,
+        where: {
+          AND: [
+            {
+              updatedAt: {
+                gte: todayStart,
+                lte: todayEnd,
+              },
+            },
+            {
+              approvalStatus: { in: ['APPROVED', 'PENDING'] },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          caption: true,
+          image: true,
+          impressions: true,
+          averageRating: true,
+          createdAt: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              image: true,
+              isVerified: true,
+              activityScore: true,
+              votingPattern: true,
+              gender: true,
             },
           },
-          {
-            approvalStatus: { in: ['APPROVED', 'PENDING'] },
+          _count: {
+            select: {
+              vote: true,
+              comment: true,
+            },
           },
-        ],
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-            isVerified: true,
-            activityScore: true,
-            votingPattern: true,
-            gender: true,
-            dateOfBirth: true,
+          vote: {
+            select: {
+              weight: true,
+              rating: true,
+            },
+            where: {
+              isOutlier: false,
+            },
           },
         },
-        _count: {
-          select: {
-            vote: true,
-            comment: true,
-          },
-        },
-        vote: {
-          select: {
-            weight: true,
-            userWeight: true,
-            contextWeight: true,
-            rating: true,
-            isOutlier: false,
-          },
-          where: {
-            isOutlier: false,
-          },
-        },
-      },
-    });
+        orderBy: [{ impressions: 'desc' }, { updatedAt: 'desc' }],
+        take: 50,
+      });
 
     // Calculate engagement score for each post using weighted algorithm
     const postsWithScores = todayPosts.map((post) => {
@@ -634,7 +660,7 @@ const app = new Hono()
 
     // If we have exactly 3 top posts today, return them
     if (topPosts.length === 3) {
-      return c.json({
+      const payload = {
         data: topPosts.map((post) => ({
           id: post.id,
           caption: post.caption,
@@ -647,7 +673,9 @@ const app = new Hono()
           impressions: post.impressions,
         })),
         message: "Top 3 posts based on today's engagement and vote quality",
-      });
+      };
+      setCached(cacheKey, payload, 60_000);
+      return c.json(payload);
     }
 
     // If we have fewer than 3, get additional recent top posts
@@ -676,17 +704,23 @@ const app = new Hono()
             },
           ],
         },
-        include: {
+        select: {
+          id: true,
+          caption: true,
+          image: true,
+          impressions: true,
+          averageRating: true,
+          createdAt: true,
           creator: {
             select: {
               id: true,
               name: true,
+              username: true,
               image: true,
               isVerified: true,
               activityScore: true,
               votingPattern: true,
               gender: true,
-              dateOfBirth: true,
             },
           },
           _count: {
@@ -698,10 +732,7 @@ const app = new Hono()
           vote: {
             select: {
               weight: true,
-              userWeight: true,
-              contextWeight: true,
               rating: true,
-              isOutlier: false,
             },
             where: {
               isOutlier: false,
@@ -795,17 +826,19 @@ const app = new Hono()
         recent: post.hasOwnProperty('recencyFactor') ? true : false,
       }));
 
-      return c.json({
+      const payload = {
         data: formattedPosts,
         message:
           topPosts.length === 0
             ? 'No top posts today. Showing recent top posts based on weighted engagement.'
             : `Showing ${topPosts.length} top post(s) from today and ${topRecentPosts.length} recent top post(s).`,
-      });
+      };
+      setCached(cacheKey, payload, 60_000);
+      return c.json(payload);
     }
 
       // This code should never be reached, but included for safety
-      return c.json({
+      const payload = {
         data: topPosts.map((post) => ({
           id: post.id,
           caption: post.caption,
@@ -818,7 +851,9 @@ const app = new Hono()
           impressions: post.impressions,
         })),
         message: 'Top posts based on engagement and vote quality',
-      });
+      };
+      setCached(cacheKey, payload, 60_000);
+      return c.json(payload);
     } catch (error: unknown) {
       console.error('Error fetching top creators:', error);
       const err = error as { message?: string; code?: string };
@@ -841,20 +876,54 @@ const app = new Hono()
         return c.json({ error: 'Missing id!' }, 400);
       }
 
+      const cacheKey = `post:${postId}`;
+      const cached = getCached<unknown>(cacheKey);
+      if (cached) return c.json({ success: true, data: cached }, 200);
+
       const post = await db.post.findUnique({
         where: {
           id: postId,
         },
-        include: {
+        select: {
+          id: true,
+          caption: true,
+          tags: true,
+          image: true,
+          approvalStatus: true,
+          averageRating: true,
+          totalVotes: true,
+          weightedRating: true,
+          ratingDistribution: true,
+          impressions: true,
+          sharesCount: true,
+          creatorId: true,
+          createdAt: true,
+          updatedAt: true,
           _count: {
             select: {
               vote: true,
             },
           },
-          creator: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              image: true,
+              gender: true,
+            },
+          },
           vote: {
-            include: {
-              voter: true,
+            select: {
+              id: true,
+              rating: true,
+              weight: true,
+              voterId: true,
+              ipAddress: true,
+              createdAt: true,
+              voter: {
+                select: { id: true, name: true, image: true },
+              },
             },
           },
         },
@@ -864,6 +933,7 @@ const app = new Hono()
         return c.json({ message: 'Post not found' }, 404);
       }
 
+      setCached(cacheKey, post, 10_000);
       return c.json({ success: true, data: post }, 200);
     }
   )

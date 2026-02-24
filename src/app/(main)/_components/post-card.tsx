@@ -150,6 +150,7 @@ const PostCard = ({
               size='icon'
               onClick={shareContent}
               variant='ghost'
+              aria-label='Share post'
               className='text-blue-400 hover:text-white hover:bg-transparent size-6'
             >
               <Share2 size={20} />
@@ -159,6 +160,7 @@ const PostCard = ({
               disabled={isPending}
               onClick={handleDelete}
               variant='ghost'
+              aria-label='Delete post'
               className='text-rose-600 hover:text-white hover:bg-transparent size-6'
             >
               <Trash size={20} />

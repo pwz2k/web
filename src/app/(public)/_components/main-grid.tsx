@@ -139,22 +139,24 @@ const MainGrid = () => {
                     )}
                   />
 
-                  <Image
-                    src={post.image}
-                    alt={post.caption ?? `Post ${idx + 1}`}
-                    className={cn(
-                      'object-cover w-full h-full rounded-3xl',
-                      'transition-all duration-300',
-                      isActive ? 'opacity-100' : 'opacity-50'
-                    )}
-                    fill
-                    sizes='(max-width: 768px) 100vw, 640px'
-                    priority={idx === 0}
-                    loading={idx === 0 ? undefined : 'lazy'}
-                    placeholder='blur'
-                    blurDataURL={IMAGE_BLUR_PLACEHOLDER}
-                    quality={75}
-                  />
+                  <div className='absolute inset-0 rounded-3xl'>
+                    <Image
+                      src={post.image}
+                      alt={post.caption ?? `Post ${idx + 1}`}
+                      className={cn(
+                        'object-cover w-full h-full rounded-3xl',
+                        'transition-all duration-300',
+                        isActive ? 'opacity-100' : 'opacity-50'
+                      )}
+                      fill
+                      sizes='(max-width: 768px) 100vw, 640px'
+                      priority={idx === 0}
+                      loading={idx === 0 ? undefined : 'lazy'}
+                      placeholder='blur'
+                      blurDataURL={IMAGE_BLUR_PLACEHOLDER}
+                      quality={75}
+                    />
+                  </div>
 
                   {isActive && (
                     <div className='absolute bottom-4 left-4 right-4 z-20 border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-xl rounded-full text-white'>
@@ -206,17 +208,19 @@ const MainGrid = () => {
                     isPrev && 'translate-x-1/2'
                   )}
                 >
-                  <Image
-                    src={'/images/no-more-posts.jpeg'}
-                    alt={'No more posts'}
-                    className={cn(
-                      'object-cover w-full h-full rounded-3xl',
-                      'transition-all duration-300',
-                      isActive ? 'opacity-100' : 'opacity-50'
-                    )}
-                    fill
-                    sizes='(max-width: 768px) 100vw, 640px'
-                  />
+                  <div className='absolute inset-0 rounded-3xl'>
+                    <Image
+                      src={'/images/no-more-posts.jpeg'}
+                      alt={'No more posts'}
+                      className={cn(
+                        'object-cover w-full h-full rounded-3xl',
+                        'transition-all duration-300',
+                        isActive ? 'opacity-100' : 'opacity-50'
+                      )}
+                      fill
+                      sizes='(max-width: 768px) 100vw, 640px'
+                    />
+                  </div>
                 </div>
               )}
             </SwiperSlide>

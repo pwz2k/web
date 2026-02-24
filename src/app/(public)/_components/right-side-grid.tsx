@@ -99,7 +99,10 @@ function TopUsers() {
             key={post.id}
             className='relative aspect-[1/1.5] overflow-hidden rounded-3xl'
           >
-            <Link href={`/?id=${post.id}`}>
+            <Link
+              href={`/?id=${post.id}`}
+              className='relative block size-full'
+            >
               <Image
                 src={post.image}
                 alt={post.caption ?? `Post ${idx + 1}`}

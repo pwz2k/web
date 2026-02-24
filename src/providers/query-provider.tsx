@@ -8,6 +8,8 @@ function makeQueryClient() {
       queries: {
         staleTime: 1000 * 60, // 1 min default (fewer requests to remote DB)
         gcTime: 1000 * 60 * 5, // 5 min keep cache after unmount
+        refetchOnWindowFocus: false, // avoid expensive refetches (remote DB)
+        refetchOnReconnect: false,
       },
     },
   });
