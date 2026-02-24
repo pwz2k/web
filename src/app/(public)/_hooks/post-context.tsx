@@ -64,11 +64,6 @@ export function PostsProvider({ children }: { children: ReactNode }) {
     isRefetching,
   } = useGetPosts(preference, id);
 
-  // This effect will run whenever preference changes
-  useEffect(() => {
-    refetch();
-  }, [preference, refetch, id]);
-
   // Flatten all pages into a single posts array
   const posts = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -85,8 +80,6 @@ export function PostsProvider({ children }: { children: ReactNode }) {
     refetch,
     isRefetching,
   };
-
-  console.log({ hasNextPage });
 
   return (
     <PostsContext.Provider value={value}>{children}</PostsContext.Provider>

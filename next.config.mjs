@@ -38,9 +38,8 @@ const nextConfig = {
       ),
     };
 
-    // Reduce "Cannot read properties of undefined (reading 'call')" in production
-    // by using stable module IDs so chunk references stay valid after deploy
-    if (!isServer && !dev && config.optimization) {
+    // Use stable module IDs so chunk references stay valid (avoids "reading 'call'" in prod)
+    if (!isServer && config.optimization) {
       config.optimization.moduleIds = 'deterministic';
     }
 

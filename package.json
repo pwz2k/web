@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
-    "dev:clean": "rm -rf .next node_modules/.cache && next dev -p 3000",
+    "dev": "next dev -p 3000 --turbo",
+    "dev:webpack": "next dev -p 3000",
+    "dev:clean": "rm -rf .next node_modules/.cache && next dev -p 3000 --turbo",
     "dev:turbo": "rm -rf .next node_modules/.cache && next dev -p 3000 --turbo",
     "dev:https": "next dev --experimental-https",
     "build": "NODE_OPTIONS=\"--max-old-space-size=4096\" next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "npx prisma generate",
+    "db:grant-sequences": "node prisma/scripts/grant-sequences.mjs",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore ."
   },

@@ -110,7 +110,9 @@ const LeftSideGrid = () => {
             {Object.values(Gender).map((item) => (
               <button
                 key={item}
+                type='button'
                 onClick={() => setQueryParam('preference', item)}
+                aria-pressed={preference === item}
                 className={cn(
                   'py-2 px-4 flex-1 text-center text-sm capitalize',
                   preference === item && 'bg-white text-black rounded-full'
@@ -120,7 +122,9 @@ const LeftSideGrid = () => {
               </button>
             ))}
             <button
+              type='button'
               onClick={() => removeQueryParam('preference')}
+              aria-pressed={!preference}
               className={cn(
                 'py-2 px-4 flex-1 text-center text-sm capitalize',
                 !preference && 'bg-white text-black rounded-full'

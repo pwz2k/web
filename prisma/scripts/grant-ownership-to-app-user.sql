@@ -12,17 +12,17 @@ BEGIN
   END LOOP;
 END $$;
 
--- Also sequences (for serial/bigserial columns)
+-- Also sequences (for serial/bigserial columns, e.g. Vote_id_seq)
 DO $$
 DECLARE
   r RECORD;
 BEGIN
   FOR r IN (
-    SELECT sequencename
+    SELECT schemaname, sequencename
     FROM pg_sequences
     WHERE schemaname = 'public'
   )
   LOOP
-    EXECUTE format('ALTER SEQUENCE %I OWNER TO app_admin_user', r.sequencename);
+    EXECUTE format('ALTER SEQUENCE %I.%I OWNER TO app_admin_user', r.schemaname, r.sequencename);
   END LOOP;
 END $$;

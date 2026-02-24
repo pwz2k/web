@@ -62,13 +62,6 @@ const app = new Hono()
         _avg: {
           weightedRating: true,
         },
-        having: {
-          creatorId: {
-            _count: {
-              gt: 0, // Only include creators with at least 1 post
-            },
-          },
-        },
       });
 
       // Count how many creators have a lower average rating

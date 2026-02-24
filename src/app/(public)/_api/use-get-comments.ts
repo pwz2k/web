@@ -14,11 +14,14 @@ export const useGetComments = (id?: string) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch post');
+        // GET comments is public; 401 can happen if cookies weren't sent or session expired
+        if (response.status === 401) return [];
+        throw new Error('Failed to fetch comments');
       }
 
-      const { data } = await response.json();
-      return data;
+      const json = await response.json();
+      const data = json?.data ?? json;
+      return Array.isArray(data) ? data : [];
     },
   });
 
