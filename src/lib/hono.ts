@@ -8,6 +8,6 @@ const baseUrl =
 
 // Always send cookies so auth and session work for protected APIs (comment POST, profile, etc.)
 export const client = hc<AppType>(baseUrl, {
-  fetch: (input, init) =>
+  fetch: (input: RequestInfo | URL, init?: RequestInit) =>
     fetch(input, { ...init, credentials: 'include' }),
 });

@@ -15,7 +15,8 @@ export const useGetComments = (id?: string) => {
 
       if (!response.ok) {
         // GET comments is public; 401 can happen if cookies weren't sent or session expired
-        if (response.status === 401) return [];
+        const status = Number(response.status);
+        if (status === 401) return [];
         throw new Error('Failed to fetch comments');
       }
 
