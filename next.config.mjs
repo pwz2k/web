@@ -6,6 +6,23 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Long cache for static assets (improves repeat-visit performance / Lighthouse "efficient cache lifetimes")
+  async headers() {
+    return [
+      {
+        source: '/1.png',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/images/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ];
+  },
   // Note: optimizePackageImports was removed – it can trigger "reading 'call'" with some chunk splits in dev.
   images: {
     remotePatterns: [
