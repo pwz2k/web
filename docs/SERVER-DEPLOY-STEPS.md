@@ -73,13 +73,18 @@ UPLOADTHING_TOKEN="your-uploadthing-secret-key"
 
 ## 5. Install deps, Prisma, and build
 
+Do a **clean build** so Server Action IDs match the deployed code (avoids “Failed to find Server Action” errors from cached pages):
+
 ```bash
 cd /var/www/web
 
+rm -rf .next
 npm install --legacy-peer-deps
 npx prisma generate
 NODE_OPTIONS="--max-old-space-size=4096" npm run build
 ```
+
+- `sharp` is in dependencies for production image optimization; install will pull it in and remove the “optional 'sharp' package” warning.
 
 ---
 
@@ -131,6 +136,15 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000
 ---
 
 **Note:** You do **not** need to run `prisma db push` on the server if the database schema is already applied (e.g. you ran it locally). Only run it on the server if you are applying schema changes from there.
+
+---
+
+## “Failed to find Server Action” / old deployment
+
+If logs show **Failed to find Server Action. This request might be from an older or newer deployment**:
+
+1. Do a **clean build** (step 5): `rm -rf .next` then `npm run build` and `pm2 restart web`.
+2. Users with an old tab open should **hard refresh** (Ctrl+Shift+R / Cmd+Shift+R) or reopen the site so the browser loads the new bundle.
 
 ---
 

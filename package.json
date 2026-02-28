@@ -59,6 +59,7 @@
     "react-hook-form": "^7.53.2",
     "react-lottie": "^1.2.10",
     "recharts": "^2.15.1",
+    "sharp": "^0.33.5",
     "sonner": "^1.7.1",
     "stripe": "^17.7.0",
     "swiper": "^11.2.1",
