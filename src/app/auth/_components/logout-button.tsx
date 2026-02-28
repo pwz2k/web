@@ -8,7 +8,10 @@ interface LogoutButtonProps {
 
 export const LogoutButton = ({ children }: LogoutButtonProps) => {
   const onClick = async () => {
-    await signOut({ callbackUrl: '/', redirect: true });
+    // Use current origin so logout always redirects to this site's home (avoids localhost on production)
+    const callbackUrl =
+      typeof window !== 'undefined' ? `${window.location.origin}/` : '/';
+    await signOut({ callbackUrl, redirect: true });
   };
 
   return (

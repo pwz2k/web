@@ -59,10 +59,14 @@ NEXT_PUBLIC_APP_URL="https://pyp6.com"
 
 # Production
 NODE_ENV="production"
+
+# UploadThing (required for sign-up photo & post uploads)
+UPLOADTHING_TOKEN="your-uploadthing-secret-key"
 ```
 
 - Replace `YOUR_DB_PASSWORD` with the real `app_admin_user` password. If the password has `&`, use `%26` in the URL (e.g. `x4YgrK%26fxMBPe`).
 - Keep or generate a strong `AUTH_SECRET` (e.g. `openssl rand -base64 32`).
+- Set `UPLOADTHING_TOKEN` from your [UploadThing dashboard](https://uploadthing.com/dashboard) so registration and photo uploads work.
 - Save and exit (Ctrl+O, Enter, Ctrl+X in nano).
 
 ---
@@ -119,7 +123,7 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000
 | 1 | SSH to server |
 | 2 | `cd /var/www/web` |
 | 3 | `git pull origin main` (or upload code) |
-| 4 | Update `.env` (DATABASE_URL, AUTH_SECRET, NEXT_PUBLIC_APP_URL, NODE_ENV) |
+| 4 | Update `.env` (DATABASE_URL, AUTH_SECRET, NEXT_PUBLIC_APP_URL, NODE_ENV, **UPLOADTHING_TOKEN**) |
 | 5 | `npm install --legacy-peer-deps` → `npx prisma generate` → `npm run build` |
 | 6 | `pm2 restart web` |
 | 7 | `pm2 status` and `pm2 logs web` |
@@ -127,6 +131,22 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000
 ---
 
 **Note:** You do **not** need to run `prisma db push` on the server if the database schema is already applied (e.g. you ran it locally). Only run it on the server if you are applying schema changes from there.
+
+---
+
+## UploadThing (registration & photo uploads)
+
+Sign-up and photo uploads (posts, profile picture) use [UploadThing](https://uploadthing.com). If registration fails or you see errors about a missing key, set your UploadThing token on the server.
+
+1. In the [UploadThing dashboard](https://uploadthing.com/dashboard), open your app and copy the **Secret Key** (or token).
+2. On the server, edit `.env` and add (or fix):
+   ```bash
+   UPLOADTHING_TOKEN=your_secret_key_here
+   ```
+   Some setups use `UPLOADTHING_SECRET` instead; the SDK accepts both. Use the same variable name as in your local `.env`.
+3. Restart the app: `pm2 restart web`.
+
+Without this variable, the `/api/uploadthing` route cannot authenticate with UploadThing and uploads (including sign-up profile photo) will fail.
 
 ---
 
