@@ -16,16 +16,38 @@ import { useOpenProfile } from '../_hooks/use-open-profile';
 import { useOpenSettings } from '../_hooks/use-open-settings';
 
 export default function ProfilePage() {
-  const { data: user, isLoading: isUserLoading } = useGetUserProfile();
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError,
+    refetch,
+    sessionStatus,
+  } = useGetUserProfile();
 
   const { onOpen: onNewPostOpen } = useNewPost();
   const { onOpen: onProfileOpen } = useOpenProfile();
   const { onOpen: onSettingsOpen } = useOpenSettings();
 
-  if (isUserLoading) {
+  const sessionLoading = sessionStatus === 'loading';
+  const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
+
+  if (sessionLoading || profileLoading) {
     return (
       <div className='flex items-center justify-center'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className='flex flex-col items-center justify-center gap-4 px-4 py-8'>
+        <p className='text-muted-foreground text-center'>
+          Could not load profile. The session may still be updating.
+        </p>
+        <Button variant='secondary' onClick={() => refetch()}>
+          Try again
+        </Button>
       </div>
     );
   }

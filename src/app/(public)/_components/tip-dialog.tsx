@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -43,9 +44,13 @@ const TipDialog = ({
       <DialogContent
         hideCloseButton={isPending}
         className='border-none rounded-xl max-w-md'
+        aria-describedby={undefined}
       >
         <DialogHeader>
           <DialogTitle>Select an amount to tip</DialogTitle>
+          <DialogDescription className='sr-only'>
+            Enter or choose an amount to tip the creator.
+          </DialogDescription>
         </DialogHeader>
         <TipForm
           postId={postId}

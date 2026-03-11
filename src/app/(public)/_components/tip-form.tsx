@@ -54,7 +54,7 @@ export default function TipForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: undefined,
+      amount: '',
     },
   });
 
@@ -162,6 +162,7 @@ export default function TipForm({
                       className='pl-7 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-base text-white/80'
                       disabled={isPending}
                       {...field}
+                      value={field.value ?? ''}
                     />
                   </div>
                 </FormControl>
