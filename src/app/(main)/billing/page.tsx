@@ -13,15 +13,37 @@ import { useNewAddFunds } from '../_hooks/use-new-add-funds';
 import { useNewRequestAPayout } from '../_hooks/use-new-request-a-payout';
 
 export default function BillingPage() {
-  const { data: user, isLoading } = useGetUserProfile();
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError,
+    refetch,
+    sessionStatus,
+  } = useGetUserProfile();
 
   const { onOpen: onOpenRequestAPayout } = useNewRequestAPayout();
   const { onOpen: onOpenAddFunds } = useNewAddFunds();
 
-  if (isLoading) {
+  const sessionLoading = sessionStatus === 'loading';
+  const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
+
+  if (sessionLoading || profileLoading) {
     return (
       <div className='flex items-center justify-center'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className='flex flex-col items-center justify-center gap-4 px-4 py-8'>
+        <p className='text-muted-foreground text-center'>
+          Could not load billing. The session may still be updating.
+        </p>
+        <Button variant='secondary' onClick={() => refetch()}>
+          Try again
+        </Button>
       </div>
     );
   }

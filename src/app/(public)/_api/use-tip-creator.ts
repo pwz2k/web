@@ -20,6 +20,12 @@ export const useTipCreator = (id?: string) => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please sign in to tip.');
+        }
+        if (response.status === 402) {
+          throw new Error('Insufficient balance. Add funds to continue.');
+        }
         throw new Error('Failed to tip the creator');
       }
 
@@ -28,8 +34,8 @@ export const useTipCreator = (id?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_PROFILE] });
     },
-    onError: () => {
-      toast.error('Failed to tip the creator!');
+    onError: (error) => {
+      toast.error(error.message || 'Failed to tip the creator!');
     },
   });
 

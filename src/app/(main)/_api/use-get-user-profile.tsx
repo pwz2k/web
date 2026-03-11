@@ -30,7 +30,9 @@ export const useGetUserProfile = () => {
         totalSpent: convertAmountFromMiliunits(data.totalSpent ?? 0),
       };
     },
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
-  return query;
+  return { ...query, sessionStatus: status };
 };

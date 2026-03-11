@@ -21,28 +21,6 @@ const app = new Hono()
       },
     });
 
-    const tips = await db.tip.findMany({
-      where: {
-        OR: [
-          {
-            creatorId: user.id,
-          },
-          {
-            userId: user.id,
-          },
-        ],
-      },
-      include: {
-        creator: true,
-        user: true,
-        post: true,
-      },
-    });
-
-    if (!transactions.length) {
-      return c.json({ message: 'No transactions found' }, 404);
-    }
-
     return c.json({ success: true, data: transactions }, 200);
   })
   .post('/', zValidator('json', transactionSchema), async (c) => {
