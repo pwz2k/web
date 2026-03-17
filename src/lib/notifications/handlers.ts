@@ -114,6 +114,11 @@ export const NotificationHandlers = {
 
       const results = [];
 
+      // Don't proceed if no pending items
+      if (pendingPhotos === 0) {
+        return [];
+      }
+
       // Send notification to each moderator
       for (const moderator of moderators) {
         if (!moderator.email) continue;
@@ -122,28 +127,34 @@ export const NotificationHandlers = {
           photos: pendingPhotos,
         });
 
-        if (pendingPhotos === 0) continue; // Don't send if nothing to approve
+        try {
+          const notification = await NotificationService.createNotification(
+            NotificationType.PENDING_APPROVAL,
+            {
+              userId: moderator.id,
+              title: templateData.title,
+              message: templateData.message,
+              data: { pendingPhotos, pendingComments: 0 },
+              email: moderator.email,
+              emailSubject: templateData.emailSubject,
+              emailTemplate: templateData.emailTemplate,
+            }
+          );
 
-        const notification = await NotificationService.createNotification(
-          NotificationType.PENDING_APPROVAL,
-          {
-            userId: moderator.id,
-            title: templateData.title,
-            message: templateData.message,
-            data: { pendingPhotos, pendingComments: 0 },
-            email: moderator.email,
-            emailSubject: templateData.emailSubject,
-            emailTemplate: templateData.emailTemplate,
+          if (notification) {
+            results.push(notification);
           }
-        );
-
-        results.push(notification);
+        } catch (error) {
+          // Continue with other moderators even if one fails
+          console.error(`Failed to send notification to moderator ${moderator.id}:`, error);
+        }
       }
 
       return results;
     } catch (error) {
       console.error('Failed to send pending approval notifications:', error);
-      throw error;
+      // Don't throw - just return empty array
+      return [];
     }
   },
 
@@ -167,6 +178,15 @@ export const NotificationHandlers = {
       });
 
       const results = [];
+
+      // Only send notification if there are pending transactions
+      if (
+        pendingWithdrawals === 0 &&
+        pendingDeposits === 0 &&
+        pendingRefunds === 0
+      ) {
+        return [];
+      }
 
       // Send notification to each admin
       for (const admin of admins) {
@@ -196,12 +216,7 @@ export const NotificationHandlers = {
           pendingRefunds,
         });
 
-        // Only send notification if there are pending transactions
-        if (
-          pendingWithdrawals > 0 ||
-          pendingDeposits > 0 ||
-          pendingRefunds > 0
-        ) {
+        try {
           const notification = await NotificationService.createNotification(
             NotificationType.PAYOUT_REQUEST,
             {
@@ -219,14 +234,20 @@ export const NotificationHandlers = {
             }
           );
 
-          results.push(notification);
+          if (notification) {
+            results.push(notification);
+          }
+        } catch (error) {
+          // Continue with other admins even if one fails
+          console.error(`Failed to send notification to admin ${admin.id}:`, error);
         }
       }
 
       return results;
     } catch (error) {
       console.error('Failed to send pending transaction notifications:', error);
-      throw error;
+      // Don't throw - just return empty array
+      return [];
     }
   },
 

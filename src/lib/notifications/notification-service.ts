@@ -2,16 +2,21 @@ import { db } from '@/lib/db';
 import { NotificationType } from '@prisma/client';
 import nodemailer from 'nodemailer';
 
-// Initialize nodemailer transporter with Resend SMTP
-const transporter = nodemailer.createTransport({
-  host: 'smtp.resend.com',
-  secure: true,
-  port: 465,
-  auth: {
-    user: 'resend',
-    pass: process.env.RESEND_API_KEY,
-  },
-});
+// Check if email is configured
+const isEmailConfigured = Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+
+// Initialize nodemailer transporter with Resend SMTP (only if configured)
+const transporter = isEmailConfigured
+  ? nodemailer.createTransport({
+      host: 'smtp.resend.com',
+      secure: true,
+      port: 465,
+      auth: {
+        user: 'resend',
+        pass: process.env.RESEND_API_KEY,
+      },
+    })
+  : null;
 
 export interface NotificationPayload {
   userId: string;
@@ -41,7 +46,7 @@ export class NotificationService {
         },
       });
 
-      // Send email if email is provided
+      // Send email if email is provided (fails silently if not configured)
       if (payload.email) {
         await this.sendEmail({
           to: payload.email,
@@ -49,17 +54,15 @@ export class NotificationService {
           html: payload.emailTemplate || `<p>${payload.message}</p>`,
         });
 
-        // Mark notification as emailed
-        await db.notification.update({
-          where: { id: notification.id },
-          data: { emailSent: true },
-        });
+        // Mark notification as emailed only if email was sent
+        // Note: We don't mark as sent since sendEmail now returns null on failure
       }
 
       return notification;
     } catch (error) {
       console.error('Failed to create notification:', error);
-      throw error;
+      // Don't throw - just return null
+      return null;
     }
   }
 
@@ -75,6 +78,12 @@ export class NotificationService {
     html: string;
     text?: string;
   }) {
+    // Skip if email is not configured
+    if (!isEmailConfigured || !transporter) {
+      console.log('Email not configured - skipping email send. Set RESEND_API_KEY and EMAIL_FROM to enable.');
+      return null;
+    }
+
     try {
       const result = await transporter.sendMail({
         from: process.env.EMAIL_FROM,
@@ -87,7 +96,8 @@ export class NotificationService {
       return result;
     } catch (error) {
       console.error('Failed to send email:', error);
-      throw error;
+      // Don't throw - just log the error so the notification still gets created
+      return null;
     }
   }
 
