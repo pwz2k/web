@@ -58,7 +58,20 @@ export const {
       }
       return session;
     },
-    async jwt({ token }) {
+    async jwt({ token, user, trigger, session }) {
+      // On initial sign-in, the 'user' parameter is populated from authorize()
+      if (user) {
+        token.sub = user.id;
+        token.email = user.email;
+        token.name = user.name;
+      }
+
+      // Handle session update trigger
+      if (trigger === 'update' && session) {
+        token = { ...token, ...session };
+      }
+
+      // On subsequent requests, refresh user data from database
       if (!token.sub) return token;
 
       const existingUser = await getUserById(token.sub);
@@ -66,7 +79,7 @@ export const {
 
       if (!existingUser) return token;
 
-      token.name = existingUser.name;
+      token.name = existingUser.name || existingUser.username;
       token.username = existingUser.username;
       token.email = existingUser.email;
       token.image = existingUser.image;

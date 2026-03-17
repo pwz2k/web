@@ -38,7 +38,12 @@ export default {
 
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (passwordMatch) {
-          return { id: user.id, email: user.email, name: user.name }; // Return only necessary fields
+          // Return user data with name fallback to username
+          return { 
+            id: user.id, 
+            email: user.email, 
+            name: user.name || user.username 
+          };
         }
 
         return null;

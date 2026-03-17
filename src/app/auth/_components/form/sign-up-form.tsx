@@ -112,20 +112,26 @@ export default function SignupForm() {
         values.image = uploadedFiles[0].url;
       }
 
-      register(values)
-        .then((data) => {
-          setError(data.error);
+      try {
+        const data = await register(values);
+        setError(data.error);
 
-          if (data.success) {
-            setSuccess(data.success);
-            throwConfetti('fireworks');
-            login({ email: values.email, password: values.password });
-          }
-        })
-        .catch((error) => {
-          console.error('Registration error:', error);
-          setError('Something went wrong. Please try again later.');
-        });
+        if (data.success) {
+          setSuccess(data.success);
+          throwConfetti('fireworks');
+          // Properly await login to ensure session is established before redirect
+          await login({ email: values.email, password: values.password });
+        }
+      } catch (error) {
+        // Check if this is a redirect error from NextAuth (expected behavior)
+        if (error instanceof Error && 'digest' in error && 
+            typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+          // This is expected - the redirect is handled by Next.js
+          throw error;
+        }
+        console.error('Registration error:', error);
+        setError('Something went wrong. Please try again later.');
+      }
     });
   };
 

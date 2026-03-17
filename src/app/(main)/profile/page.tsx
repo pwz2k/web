@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { BadgeCheck, CircleFadingPlus, Loader2, Settings } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { useGetNextMilestone } from '../_api/use-get-next-milestone';
 import { useGetUserPosts } from '../_api/use-get-user-posts';
 import { useGetUserProfile } from '../_api/use-get-user-profile';
@@ -14,8 +14,10 @@ import PostCard from '../_components/post-card';
 import { useNewPost } from '../_hooks/use-new-post';
 import { useOpenProfile } from '../_hooks/use-open-profile';
 import { useOpenSettings } from '../_hooks/use-open-settings';
+import { useEffect } from 'react';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const {
     data: user,
     isLoading: isUserLoading,
@@ -31,7 +33,15 @@ export default function ProfilePage() {
   const sessionLoading = sessionStatus === 'loading';
   const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
 
-  if (sessionLoading || profileLoading) {
+  // Redirect to sign-in if unauthenticated (this shouldn't normally happen due to middleware)
+  useEffect(() => {
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/auth/sign-in?callbackUrl=/profile');
+    }
+  }, [sessionStatus, router]);
+
+  // Show loading while session is loading or profile is loading
+  if (sessionLoading || profileLoading || sessionStatus === 'unauthenticated') {
     return (
       <div className='flex items-center justify-center'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
