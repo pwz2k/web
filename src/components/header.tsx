@@ -2,7 +2,7 @@ import { LogoutButton } from '@/app/auth/_components/logout-button';
 import { currentUser } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
 import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut, User, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import Logo from './logo';
 import { buttonVariants } from './ui/button';
@@ -30,29 +30,31 @@ const Header = async () => {
                   <ChevronDown className='size-6 text-white' />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <Link href='/profile'>
-                    <DropdownMenuItem className='cursor-pointer'>
+                  <DropdownMenuItem className='cursor-pointer' asChild>
+                    <Link href='/profile' className='flex items-center gap-2'>
+                      <User className='size-4' />
                       Profile
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link href='/billing'>
-                    <DropdownMenuItem className='cursor-pointer'>
-                      Billing
-                    </DropdownMenuItem>
-                  </Link>
-                  {user.role === UserRole.MODERATOR && (
-                    <Link href='/moderator/posts'>
-                      <DropdownMenuItem className='cursor-pointer'>
-                        Moderator Dashboard
-                      </DropdownMenuItem>
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className='cursor-pointer' asChild>
+                    <Link href='/billing' className='flex items-center gap-2'>
+                      <CreditCard className='size-4' />
+                      Billing
+                    </Link>
+                  </DropdownMenuItem>
+                  {user.role === UserRole.MODERATOR && (
+                    <DropdownMenuItem className='cursor-pointer' asChild>
+                      <Link href='/moderator/posts'>
+                        Moderator Dashboard
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                   {user.role === UserRole.ADMIN && (
-                    <Link href='/admin'>
-                      <DropdownMenuItem className='cursor-pointer'>
+                    <DropdownMenuItem className='cursor-pointer' asChild>
+                      <Link href='/admin'>
                         Admin Dashboard
-                      </DropdownMenuItem>
-                    </Link>
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                   <LogoutButton>
                     <DropdownMenuItem className='cursor-pointer'>
