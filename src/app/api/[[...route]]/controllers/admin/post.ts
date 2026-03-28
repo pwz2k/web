@@ -1,66 +1,34 @@
 import { db } from '@/lib/db';
-import { NotificationHandlers } from '@/lib/notifications/handlers';
-import { managePostStatusSchema } from '@/schemas/admin';
+import { ApprovalStatus } from '@prisma/client';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-const ADMIN_POSTS_CACHE_KEY = 'admin:posts:list';
-const ADMIN_POSTS_CACHE_TTL_MS = 30_000; // 30s
-
-type CacheEntry<T> = { value: T; expiresAt: number };
-const memCache = new Map<string, CacheEntry<unknown>>();
-
-function getCached<T>(key: string): T | undefined {
-  const entry = memCache.get(key);
-  if (!entry) return undefined;
-  if (Date.now() > entry.expiresAt) {
-    memCache.delete(key);
-    return undefined;
-  }
-  return entry.value as T;
-}
-
-function setCached<T>(key: string, value: T, ttlMs: number) {
-  memCache.set(key, { value, expiresAt: Date.now() + ttlMs });
-}
-
-async function fetchAdminPosts() {
-  return db.post.findMany({
-    include: {
-      creator: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-}
-
 const app = new Hono()
   .get('/', async (c) => {
-    const cached = getCached<Awaited<ReturnType<typeof fetchAdminPosts>>>(ADMIN_POSTS_CACHE_KEY);
-    if (cached) return c.json({ data: cached });
+    // Use include to fetch all fields for backward compatibility with existing components
+    const posts = await db.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        creator: true,
+      },
+    });
 
-    const posts = await fetchAdminPosts();
-    setCached(ADMIN_POSTS_CACHE_KEY, posts, ADMIN_POSTS_CACHE_TTL_MS);
     return c.json({ data: posts });
   })
-  .patch(
+  .get(
     '/:id',
-    zValidator('json', managePostStatusSchema),
-    zValidator('param', z.object({ id: z.string().optional() })),
+    zValidator(
+      'param',
+      z.object({
+        id: z.string().optional(),
+      })
+    ),
     async (c) => {
       const { id } = c.req.valid('param');
-      const data = c.req.valid('json');
 
       if (!id) {
-        return c.json(
-          {
-            success: false,
-            message: 'Post id is required',
-          },
-          400
-        );
+        return c.json({ error: 'Missing id!' }, 400);
       }
 
       const post = await db.post.findUnique({
@@ -72,36 +40,98 @@ const app = new Hono()
         },
       });
 
-      if (!post) {
-        return c.json(
-          {
-            success: false,
-            message: 'Post not found',
-          },
-          404
-        );
+      return c.json({ data: post });
+    }
+  )
+  .patch(
+    '/:id',
+    zValidator('json', z.object({ approvalStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED']).optional() })),
+    zValidator('param', z.object({ id: z.string().optional() })),
+    async (c) => {
+      const data = c.req.valid('json');
+      const { id } = c.req.valid('param');
+
+      if (!id) {
+        return c.json({ error: 'Missing id!' }, 400);
       }
 
-      await db.post.update({
+      // Check if post exists
+      const existingPost = await db.post.findUnique({
+        where: { id },
+      });
+
+      if (!existingPost) {
+        return c.json({ error: 'Post not found!' }, 404);
+      }
+
+      const post = await db.post.update({
         where: {
           id,
         },
         data,
       });
 
-      memCache.delete(ADMIN_POSTS_CACHE_KEY);
+      return c.json({ data: post });
+    }
+  )
+  .delete(
+    '/:id',
+    zValidator('param', z.object({ id: z.string().optional() })),
+    async (c) => {
+      const { id } = c.req.valid('param');
 
-      if (post.creator.sent_email_notifications) {
-        await NotificationHandlers.sendPostStatusNotification(post.id);
+      if (!id) {
+        return c.json({ error: 'Missing id!' }, 400);
       }
 
-      return c.json(
-        {
-          success: true,
-          message: 'Post Updated successfully',
-        },
-        200
-      );
+      await db.$transaction(async (tx) => {
+        // Delete tips for this post
+        await tx.tip.deleteMany({
+          where: { postId: id },
+        });
+
+        // Delete votes for this post
+        await tx.vote.deleteMany({
+          where: { postId: id },
+        });
+
+        // Delete comments on this post
+        await tx.comment.deleteMany({
+          where: { postId: id },
+        });
+
+        // Delete reports on this post (first get IDs for FAQ deletion)
+        const reports = await tx.reports.findMany({
+          where: { postId: id },
+          select: { id: true },
+        });
+
+        if (reports.length > 0) {
+          const reportIds = reports.map((r) => r.id);
+
+          // Delete FAQs for these reports
+          await tx.fAQ.deleteMany({
+            where: { reportId: { in: reportIds } },
+          });
+
+          // Delete report update logs
+          await tx.reportUpdateLog.deleteMany({
+            where: { reportId: { in: reportIds } },
+          });
+
+          // Delete the reports
+          await tx.reports.deleteMany({
+            where: { id: { in: reportIds } },
+          });
+        }
+
+        // Finally delete the post
+        await tx.post.delete({
+          where: { id },
+        });
+      });
+
+      return c.json({ success: true });
     }
   );
 

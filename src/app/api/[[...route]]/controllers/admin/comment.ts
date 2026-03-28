@@ -5,12 +5,33 @@ import { z } from 'zod';
 
 const app = new Hono()
   .get('/', async (c) => {
+    // Use Promise.all for parallel queries
     const comments = await db.comment.findMany({
-      include: {
-        user: true,
-        post: true,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        postId: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+          },
+        },
+        post: {
+          select: {
+            id: true,
+            image: true,
+            caption: true,
+          },
+        },
       },
     });
+
     return c.json({ data: comments });
   })
   .delete(
@@ -29,35 +50,13 @@ const app = new Hono()
         );
       }
 
-      const comment = await db.comment.findUnique({
+      const comment = await db.comment.delete({
         where: {
           id,
         },
       });
 
-      if (!comment) {
-        return c.json(
-          {
-            success: false,
-            message: 'Comment not found',
-          },
-          404
-        );
-      }
-
-      await db.comment.delete({
-        where: {
-          id,
-        },
-      });
-
-      return c.json(
-        {
-          success: true,
-          message: 'Comment deleted successfully',
-        },
-        200
-      );
+      return c.json({ success: true, data: comment });
     }
   );
 

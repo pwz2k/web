@@ -13,8 +13,9 @@ export const useGetComments = () => {
         throw new Error('Failed to fetch comments');
       }
 
-      const { data } = await response.json();
-      return data;
+      const result = await response.json();
+      // Return just the data array for backward compatibility
+      return result.data;
     },
   });
 
