@@ -15,7 +15,7 @@ import SignupForm from '../_components/form/sign-up-form';
 export default function SignUpPage() {
   return (
     <div className='flex min-h-screen flex-col items-center justify-center gap-4'>
-      <Logo className='text-4xl' />{' '}
+      <Logo className='[&_img]:h-14 sm:[&_img]:h-16' />{' '}
       <Card className='w-full max-w-5xl rounded-3xl border-2 border-white/10 bg-white/[0.03] backdrop-blur-xl'>
         <CardHeader>
           <CardTitle>Signup</CardTitle>

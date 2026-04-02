@@ -14,7 +14,7 @@ import SignInForm from '../_components/form/sign-in-form';
 export default function SignInPage() {
   return (
     <div className='flex flex-col min-h-screen items-center justify-center gap-4'>
-      <Logo className='text-4xl' />
+      <Logo className='[&_img]:h-14 sm:[&_img]:h-16' />
       <Card className='w-full max-w-md rounded-3xl border-2 border-white/10 bg-white/[0.03] backdrop-blur-xl'>
         <CardHeader>
           <CardTitle>Login</CardTitle>
