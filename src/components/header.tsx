@@ -30,27 +30,43 @@ const Header = async () => {
                   <ChevronDown className='size-6 text-white' />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem className='cursor-pointer' asChild>
+                  <DropdownMenuItem
+                    className='cursor-pointer'
+                    asChild
+                    onSelect={(e) => e.preventDefault()}
+                  >
                     <Link href='/profile' className='flex items-center gap-2'>
                       <User className='size-4' />
                       Profile
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className='cursor-pointer' asChild>
+                  <DropdownMenuItem
+                    className='cursor-pointer'
+                    asChild
+                    onSelect={(e) => e.preventDefault()}
+                  >
                     <Link href='/billing' className='flex items-center gap-2'>
                       <CreditCard className='size-4' />
                       Billing
                     </Link>
                   </DropdownMenuItem>
                   {user.role === UserRole.MODERATOR && (
-                    <DropdownMenuItem className='cursor-pointer' asChild>
+                    <DropdownMenuItem
+                      className='cursor-pointer'
+                      asChild
+                      onSelect={(e) => e.preventDefault()}
+                    >
                       <Link href='/moderator/posts'>
                         Moderator Dashboard
                       </Link>
                     </DropdownMenuItem>
                   )}
                   {user.role === UserRole.ADMIN && (
-                    <DropdownMenuItem className='cursor-pointer' asChild>
+                    <DropdownMenuItem
+                      className='cursor-pointer'
+                      asChild
+                      onSelect={(e) => e.preventDefault()}
+                    >
                       <Link href='/admin'>
                         Admin Dashboard
                       </Link>
