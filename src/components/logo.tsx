@@ -3,13 +3,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 
-const Logo = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof Link>) => {
+type LogoProps = Omit<React.ComponentProps<typeof Link>, 'href'> & {
+  href?: React.ComponentProps<typeof Link>['href'];
+};
+
+const Logo = ({ className, href = '/', ...props }: LogoProps) => {
   return (
     <Link
-      href='/'
+      href={href}
       className={cn('inline-flex shrink-0 items-center', className)}
       {...props}
     >
