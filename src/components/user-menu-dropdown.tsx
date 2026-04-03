@@ -13,9 +13,9 @@ import {
 import UserAvatar from '@/components/user-avatar';
 
 export type UserMenuDropdownProps = {
-  image: string | null;
-  name: string | null;
-  username: string | null;
+  image?: string | null;
+  name?: string | null;
+  username?: string | null;
   role: UserRole;
 };
 
