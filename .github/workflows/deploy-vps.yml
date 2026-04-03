@@ -1,0 +1,61 @@
+# Required repo secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY (private key for SSH).
+# Optional: add `port: 22` under `with:` if SSH is not on the default port.
+# On the VPS, the SSH user must be able to run git, npm, pm2, prisma, and reload nginx.
+
+name: Deploy to Hostinger VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            cd /var/www/web
+            git pull
+            npm install --legacy-peer-deps
+            npx prisma generate
+            NODE_OPTIONS="--max-old-space-size=4096" npm run build
+            pm2 restart web
+            systemctl reload nginx
+            echo "Deploy successfully"
+
+      - name: Deployment complete
+        run: |
+          echo "::notice title=Deploy::Deploy successfully"
+          {
+            echo "## Deploy successfully"
+            echo ""
+            echo "Hostinger VPS deploy finished: **pm2** process \`web\` restarted and **nginx** reloaded."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -15,10 +15,10 @@ const Logo = ({ className, href = '/', ...props }: LogoProps) => {
       {...props}
     >
       <Image
-        src='/images/pyp6-logo.jpg'
+        src='/images/pyp6-logo.png'
         alt='pyp6'
-        width={1024}
-        height={585}
+        width={250}
+        height={100}
         className='h-9 w-auto sm:h-10'
         priority
       />
