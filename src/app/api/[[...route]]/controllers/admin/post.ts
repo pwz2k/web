@@ -6,11 +6,33 @@ import { z } from 'zod';
 
 const app = new Hono()
   .get('/', async (c) => {
-    // Use include to fetch all fields for backward compatibility with existing components
+    // Select only fields the admin table needs; avoid shipping full User rows (e.g. password hash).
     const posts = await db.post.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
-        creator: true,
+      select: {
+        id: true,
+        caption: true,
+        tags: true,
+        image: true,
+        approvalStatus: true,
+        averageRating: true,
+        totalVotes: true,
+        weightedRating: true,
+        ratingDistribution: true,
+        impressions: true,
+        sharesCount: true,
+        creatorId: true,
+        createdAt: true,
+        updatedAt: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            username: true,
+            image: true,
+          },
+        },
       },
     });
 

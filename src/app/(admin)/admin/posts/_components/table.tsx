@@ -43,17 +43,23 @@ import {
 } from '@/components/ui/table';
 import { DateToString } from '@/types/helper';
 import { ApprovalStatus, Post, User } from '@prisma/client';
+
+/** Matches admin list API: creator is a slim select, not full `User`. */
+export type AdminPostListCreator = Pick<
+  User,
+  'id' | 'name' | 'email' | 'username' | 'image'
+>;
+
+export type AdminPostListRow = DateToString<
+  Post & { creator: AdminPostListCreator }
+>;
 import { format } from 'date-fns';
 import { PostActions } from './actions';
 
 export function PostsTable({
   posts,
 }: {
-  posts: DateToString<
-    Post & {
-      creator: User;
-    }
-  >[];
+  posts: AdminPostListRow[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -85,13 +91,7 @@ export function PostsTable({
     router.push(pathname + '?' + createQueryString('id', id));
   };
 
-  const columns: ColumnDef<
-    DateToString<
-      Post & {
-        creator: User;
-      }
-    >
-  >[] = [
+  const columns: ColumnDef<AdminPostListRow>[] = [
     {
       accessorKey: 'image',
       header: 'Image',

@@ -24,12 +24,6 @@ const app = new Hono()
         banned: true,
         suspended: true,
         createdAt: true,
-        _count: {
-          select: {
-            post: true,
-            comment: true,
-          },
-        },
       },
     });
 

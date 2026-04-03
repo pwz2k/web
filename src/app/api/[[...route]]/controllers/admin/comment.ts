@@ -16,17 +16,7 @@ const app = new Hono()
         userId: true,
         user: {
           select: {
-            id: true,
             name: true,
-            username: true,
-            image: true,
-          },
-        },
-        post: {
-          select: {
-            id: true,
-            image: true,
-            caption: true,
           },
         },
       },

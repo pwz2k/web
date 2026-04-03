@@ -167,7 +167,7 @@ const LeftSideGrid = () => {
             </Link>
           </div>
           <div className='flex flex-wrap items-center space-x-1 text-muted-foreground text-xs'>
-            <Link href='/terms' className='hover:underline'>
+            <Link href='/privacy' className='hover:underline'>
               Privacy Policy
             </Link>
             <span>•</span>

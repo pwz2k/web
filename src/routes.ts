@@ -8,6 +8,7 @@ export const publicRoutes = [
   '/about',
   '/contact',
   '/terms',
+  '/privacy',
   '/become-a-moderator',
 ];
 

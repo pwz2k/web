@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { TermsContent } from './terms-content';
+import { PrivacyContent } from './privacy-content';
 
 export const metadata: Metadata = {
-  title: 'Terms and Conditions of Use',
-  description: 'Terms and Conditions of Use for pyp6.com and the CAMMJ Service.',
+  title: 'Privacy Policy',
+  description: 'Privacy Policy for pyp6.com and the CAMMJ Service.',
 };
 
-export default function TermsPage() {
+export default function PrivacyPage() {
   return (
     <article className='mx-auto max-w-3xl px-4 py-8 md:py-12'>
       <div className='mb-8 space-y-2 border-b border-white/10 pb-8'>
@@ -16,14 +16,14 @@ export default function TermsPage() {
             Home
           </Link>
           <span className='mx-2 text-white/30'>/</span>
-          Terms
+          Privacy
         </p>
         <h1 className='text-balance text-2xl font-semibold tracking-tight text-foreground md:text-3xl'>
-          Terms and Conditions of Use
+          Privacy Policy
         </h1>
       </div>
       <div className='text-sm leading-relaxed text-muted-foreground md:text-base'>
-        <TermsContent />
+        <PrivacyContent />
       </div>
     </article>
   );

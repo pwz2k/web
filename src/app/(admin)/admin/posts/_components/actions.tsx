@@ -13,15 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DateToString } from '@/types/helper';
-import { ApprovalStatus, Post, User } from '@prisma/client';
+import { ApprovalStatus } from '@prisma/client';
+
+import type { AdminPostListRow } from './table';
 
 interface PostActionsProps {
-  post: DateToString<
-    Post & {
-      creator: User;
-    }
-  >;
+  post: AdminPostListRow;
 }
 
 export function PostActions({ post }: PostActionsProps) {
