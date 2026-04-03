@@ -1,6 +1,7 @@
 # Required repo secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY (private key for SSH).
 # Optional: add `port: 22` under `with:` if SSH is not on the default port.
 # On the VPS, the SSH user must be able to run git, npm, pm2, prisma, and reload nginx.
+# Non-interactive SSH often skips .bashrc (no npm in PATH). The script below sources shell + nvm first.
 
 name: Deploy to Hostinger VPS
 
@@ -42,10 +43,19 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script_stop: true
           script: |
+            set -e
+            # Load env so npm/node/pm2 are on PATH (nvm, fnm, local installs, etc.)
+            export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:$PATH"
+            [ -f /etc/profile ] && . /etc/profile
+            [ -f "$HOME/.profile" ] && . "$HOME/.profile"
+            [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+            NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            if command -v fnm >/dev/null 2>&1; then eval "$(fnm env)"; fi
+            command -v npm >/dev/null || { echo "ERROR: npm not found on VPS after loading shell profile. Install Node or add it to PATH."; exit 127; }
             cd /var/www/web
             git pull
             npm install --legacy-peer-deps
-            npx prisma generate
             NODE_OPTIONS="--max-old-space-size=4096" npm run build
             pm2 restart web
             systemctl reload nginx
