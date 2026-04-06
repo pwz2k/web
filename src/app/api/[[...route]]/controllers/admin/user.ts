@@ -5,30 +5,58 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 
 const app = new Hono()
-  .get('/', async (c) => {
-    // Use select to only fetch needed fields for better performance
-    const users = await db.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        email: true,
-        image: true,
-        role: true,
-        gender: true,
-        dateOfBirth: true,
-        location: true,
-        bio: true,
-        sexualOrientation: true,
-        banned: true,
-        suspended: true,
-        createdAt: true,
-      },
-    });
+  .get(
+    '/',
+    zValidator(
+      'query',
+      z.object({
+        page: z.string().optional(),
+        limit: z.string().optional(),
+      })
+    ),
+    async (c) => {
+      const { page, limit } = c.req.valid('query');
+      const pageNum = parseInt(page || '1', 10);
+      const limitNum = parseInt(limit || '50', 10);
+      const skip = (pageNum - 1) * limitNum;
 
-    return c.json({ data: users });
-  })
+      // Use select to only fetch needed fields for better performance
+      const [users, total] = await Promise.all([
+        db.user.findMany({
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            email: true,
+            image: true,
+            role: true,
+            gender: true,
+            dateOfBirth: true,
+            location: true,
+            bio: true,
+            sexualOrientation: true,
+            banned: true,
+            suspended: true,
+            createdAt: true,
+          },
+          skip,
+          take: limitNum,
+        }),
+        db.user.count(),
+      ]);
+
+      return c.json({
+        data: users,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+      });
+    }
+  )
   .get(
     '/:id',
     zValidator(

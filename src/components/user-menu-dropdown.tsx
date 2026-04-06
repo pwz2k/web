@@ -3,7 +3,7 @@
 import { LogoutButton } from '@/app/auth/_components/logout-button';
 import { UserRole } from '@prisma/client';
 import { ChevronDown, CreditCard, LogOut, User } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,15 @@ export function UserMenuDropdown({
   username,
   role,
 }: UserMenuDropdownProps) {
+  const router = useRouter();
+
+  const handleNavigation = (path: string) => {
+    // Use replace to avoid adding to history stack and force a fresh page load
+    router.push(path);
+    // Refresh the router cache to ensure fresh data
+    router.refresh();
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className='flex items-center gap-2'>
@@ -35,45 +44,37 @@ export function UserMenuDropdown({
       <DropdownMenuContent>
         <DropdownMenuItem
           className='cursor-pointer'
-          asChild
-          onSelect={(e) => e.preventDefault()}
+          onClick={() => handleNavigation('/profile')}
         >
-          <Link href='/profile' className='flex items-center gap-2'>
-            <User className='size-4' />
-            Profile
-          </Link>
+          <User className='size-4 mr-2' />
+          Profile
         </DropdownMenuItem>
         <DropdownMenuItem
           className='cursor-pointer'
-          asChild
-          onSelect={(e) => e.preventDefault()}
+          onClick={() => handleNavigation('/billing')}
         >
-          <Link href='/billing' className='flex items-center gap-2'>
-            <CreditCard className='size-4' />
-            Billing
-          </Link>
+          <CreditCard className='size-4 mr-2' />
+          Billing
         </DropdownMenuItem>
         {role === UserRole.MODERATOR && (
           <DropdownMenuItem
             className='cursor-pointer'
-            asChild
-            onSelect={(e) => e.preventDefault()}
+            onClick={() => handleNavigation('/moderator/posts')}
           >
-            <Link href='/moderator/posts'>Moderator Dashboard</Link>
+            Moderator Dashboard
           </DropdownMenuItem>
         )}
         {role === UserRole.ADMIN && (
           <DropdownMenuItem
             className='cursor-pointer'
-            asChild
-            onSelect={(e) => e.preventDefault()}
+            onClick={() => handleNavigation('/admin')}
           >
-            <Link href='/admin'>Admin Dashboard</Link>
+            Admin Dashboard
           </DropdownMenuItem>
         )}
         <LogoutButton>
           <DropdownMenuItem className='cursor-pointer'>
-            <LogOut className='rotate-180 size-4' />
+            <LogOut className='rotate-180 size-4 mr-2' />
             Sign out
           </DropdownMenuItem>
         </LogoutButton>

@@ -25,6 +25,8 @@ import { UserRole } from '@prisma/client';
 import { format } from 'date-fns';
 import {
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   Info,
   Mail,
@@ -38,13 +40,17 @@ import { useMemo, useState } from 'react';
 import { useOpenUser } from '../../_hooks/use-open-user';
 
 export default function UsersPage() {
-  const { data: users, isLoading } = useGetUsers();
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useGetUsers({ page, limit: 50 });
   const { onOpen } = useOpenUser();
 
   // State for search and filters
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [locationFilter, setLocationFilter] = useState<string>('');
+
+  const users = data?.data ?? [];
+  const pagination = data?.pagination;
 
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
@@ -165,7 +171,7 @@ export default function UsersPage() {
 
         <div className='flex items-center text-sm text-muted-foreground'>
           <span>
-            Showing {filteredUsers.length} of {users.length} users
+            Showing {filteredUsers.length} of {pagination?.total ?? users.length} users
           </span>
         </div>
       </div>
@@ -245,6 +251,33 @@ export default function UsersPage() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className='flex items-center justify-center gap-4'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            <ChevronLeft className='h-4 w-4' />
+            Previous
+          </Button>
+          <span className='text-sm text-muted-foreground'>
+            Page {page} of {pagination.totalPages}
+          </span>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+            disabled={page === pagination.totalPages}
+          >
+            Next
+            <ChevronRight className='h-4 w-4' />
+          </Button>
         </div>
       )}
     </div>

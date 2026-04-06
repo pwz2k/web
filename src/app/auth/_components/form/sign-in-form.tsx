@@ -25,6 +25,15 @@ import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+// Check if error is a Next.js redirect error
+function isRedirectError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.message === 'NEXT_REDIRECT' ||
+      (error as any).digest?.startsWith('NEXT_REDIRECT'))
+  );
+}
+
 export default function SignInForm() {
   const searchParams = useSearchParams();
 
@@ -57,7 +66,12 @@ export default function SignInForm() {
             setSuccess(data.success);
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          // Next.js throws a redirect error which should be re-thrown to allow the redirect
+          // This is expected behavior for next-auth signIn
+          if (isRedirectError(error)) {
+            throw error;
+          }
           setError('Something went wrong. Please try again.');
         });
     });

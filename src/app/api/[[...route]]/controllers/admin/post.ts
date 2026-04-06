@@ -5,39 +5,71 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 
 const app = new Hono()
-  .get('/', async (c) => {
-    // Select only fields the admin table needs; avoid shipping full User rows (e.g. password hash).
-    const posts = await db.post.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        caption: true,
-        tags: true,
-        image: true,
-        approvalStatus: true,
-        averageRating: true,
-        totalVotes: true,
-        weightedRating: true,
-        ratingDistribution: true,
-        impressions: true,
-        sharesCount: true,
-        creatorId: true,
-        createdAt: true,
-        updatedAt: true,
-        creator: {
+  .get(
+    '/',
+    zValidator(
+      'query',
+      z.object({
+        status: z.enum(['PENDING', 'APPROVED', 'REJECTED']).optional(),
+        page: z.string().optional(),
+        limit: z.string().optional(),
+      })
+    ),
+    async (c) => {
+      const { status, page, limit } = c.req.valid('query');
+      const pageNum = parseInt(page || '1', 10);
+      const limitNum = parseInt(limit || '50', 10);
+      const skip = (pageNum - 1) * limitNum;
+
+      const where = status ? { approvalStatus: status as ApprovalStatus } : {};
+
+      // Select only fields the admin table needs; avoid shipping full User rows (e.g. password hash).
+      const [posts, total] = await Promise.all([
+        db.post.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
           select: {
             id: true,
-            name: true,
-            email: true,
-            username: true,
+            caption: true,
+            tags: true,
             image: true,
+            approvalStatus: true,
+            averageRating: true,
+            totalVotes: true,
+            weightedRating: true,
+            ratingDistribution: true,
+            impressions: true,
+            sharesCount: true,
+            creatorId: true,
+            createdAt: true,
+            updatedAt: true,
+            creator: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                username: true,
+                image: true,
+              },
+            },
           },
-        },
-      },
-    });
+          skip,
+          take: limitNum,
+        }),
+        db.post.count({ where }),
+      ]);
 
-    return c.json({ data: posts });
-  })
+      return c.json({
+        data: posts,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+      });
+    }
+  )
   .get(
     '/:id',
     zValidator(
