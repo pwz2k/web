@@ -30,7 +30,7 @@ function isRedirectError(error: unknown): boolean {
   return (
     error instanceof Error &&
     (error.message === 'NEXT_REDIRECT' ||
-      (error as any).digest?.startsWith('NEXT_REDIRECT'))
+      ('digest' in error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')))
   );
 }
 
