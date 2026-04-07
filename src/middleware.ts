@@ -101,18 +101,13 @@ export default auth(async (req) => {
     );
   }
 
-  if (isAdminRoute && userRole !== UserRole.ADMIN) {
-    return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
-  }
-
-  // Moderator routes can be accessed by both MODERATOR and ADMIN roles
-  if (
-    isModeratorRoute &&
-    userRole !== UserRole.MODERATOR &&
-    userRole !== UserRole.ADMIN
-  ) {
-    return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
-  }
+  // NOTE:
+  // Role-based gating for `/admin` and `/moderator` is enforced in their respective route-group layouts.
+  // This avoids edge-runtime auth field inconsistencies that can incorrectly redirect legit admins.
+  // Keep middleware focused on: auth required vs public, and banned/suspended redirects.
+  void isAdminRoute;
+  void isModeratorRoute;
+  void userRole;
 
   return;
 });

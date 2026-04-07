@@ -3,15 +3,24 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { currentUser } from '@/lib/auth';
+import { UserRole } from '@prisma/client';
+import { redirect } from 'next/navigation';
 import React from 'react';
 import AdminProvider from './_components/admin-providers';
 import { AppSidebar } from './_components/sidebar';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await currentUser();
+
+  if (!user || user.role !== UserRole.ADMIN) {
+    redirect('/');
+  }
+
   return (
     <SidebarProvider>
       <AdminProvider />
