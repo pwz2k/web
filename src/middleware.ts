@@ -16,14 +16,15 @@ import {
   publicRoutes,
 } from '@/routes';
 import { UserRole } from '@prisma/client';
-import { currentUser } from './lib/auth';
 
 export default auth(async (req) => {
   const { nextUrl } = req;
 
-  const user = await currentUser();
+  // Use req.auth directly instead of currentUser() which doesn't work in Edge Runtime
+  const authData = req.auth;
+  const user = authData?.user;
 
-  const isLoggedIn = !!req.auth;
+  const isLoggedIn = !!authData;
 
   const isApiRoute = nextUrl.pathname.startsWith(apiPrefix);
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
