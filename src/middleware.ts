@@ -37,7 +37,8 @@ export default auth(async (req) => {
   const user = authData?.user;
   // In some deployments, NextAuth middleware's `req.auth.user` can be missing custom fields (e.g. role).
   // Fall back to decoding the JWT so role-based routing works reliably.
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const token = await getToken({ req, secret: authSecret });
   const userRole = (user?.role ?? token?.role) as UserRole | undefined;
   const banned = (user?.banned ?? token?.banned) as boolean | undefined;
   const suspended = (user?.suspended ?? token?.suspended) as Date | string | null | undefined;
