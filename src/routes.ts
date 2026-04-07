@@ -28,27 +28,18 @@ export const bannedRoutes = ['/user/banned', '/user/suspended'];
 export const authRoutes = ['/auth/sign-in', '/auth/sign-up'];
 
 /**
- * An array of routes that are used for only by admins
- * These routes will redirect non-admin users to the default redirect path
- * @type {string[]}
+ * Prefix for admin routes - all routes starting with this prefix require ADMIN role
+ * @type {string}
  */
 
-export const adminRoutes = [
-  '/admin',
-  '/admin/users',
-  '/admin/posts',
-  '/admin/comments',
-  '/admin/payouts',
-  '/admin/logs',
-];
+export const adminPrefix = '/admin';
 
 /**
- * An array of routes that are used for only by moderators
- * These routes will redirect non-moderator users to the default redirect path
- * @type {string[]}
+ * Prefix for moderator routes - all routes starting with this prefix require MODERATOR role
+ * @type {string}
  */
 
-export const moderatorRoutes = ['/moderator'];
+export const moderatorPrefix = '/moderator';
 
 /**
  * The prefix for API authentication routes

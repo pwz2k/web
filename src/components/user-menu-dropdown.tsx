@@ -33,28 +33,28 @@ export function UserMenuDropdown({
         <ChevronDown className='size-6 text-white' />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem asChild>
-          <Link href='/profile' className='flex items-center cursor-pointer'>
+        <DropdownMenuItem asChild className='cursor-pointer'>
+          <Link href='/profile' className='flex items-center'>
             <User className='size-4 mr-2' />
             Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href='/billing' className='flex items-center cursor-pointer'>
+        <DropdownMenuItem asChild className='cursor-pointer'>
+          <Link href='/billing' className='flex items-center'>
             <CreditCard className='size-4 mr-2' />
             Billing
           </Link>
         </DropdownMenuItem>
         {role === UserRole.MODERATOR && (
-          <DropdownMenuItem asChild>
-            <Link href='/moderator/posts' className='cursor-pointer'>
+          <DropdownMenuItem asChild className='cursor-pointer'>
+            <Link href='/moderator/posts'>
               Moderator Dashboard
             </Link>
           </DropdownMenuItem>
         )}
         {role === UserRole.ADMIN && (
-          <DropdownMenuItem asChild>
-            <Link href='/admin' className='cursor-pointer'>
+          <DropdownMenuItem asChild className='cursor-pointer'>
+            <Link href='/admin'>
               Admin Dashboard
             </Link>
           </DropdownMenuItem>
