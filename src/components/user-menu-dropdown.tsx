@@ -3,7 +3,7 @@
 import { LogoutButton } from '@/app/auth/_components/logout-button';
 import { UserRole } from '@prisma/client';
 import { ChevronDown, CreditCard, LogOut, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,15 +25,6 @@ export function UserMenuDropdown({
   username,
   role,
 }: UserMenuDropdownProps) {
-  const router = useRouter();
-
-  const handleNavigation = (path: string) => {
-    // Use replace to avoid adding to history stack and force a fresh page load
-    router.push(path);
-    // Refresh the router cache to ensure fresh data
-    router.refresh();
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className='flex items-center gap-2'>
@@ -42,42 +33,40 @@ export function UserMenuDropdown({
         <ChevronDown className='size-6 text-white' />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem
-          className='cursor-pointer'
-          onClick={() => handleNavigation('/profile')}
-        >
-          <User className='size-4 mr-2' />
-          Profile
+        <DropdownMenuItem asChild>
+          <Link href='/profile' className='flex items-center cursor-pointer'>
+            <User className='size-4 mr-2' />
+            Profile
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className='cursor-pointer'
-          onClick={() => handleNavigation('/billing')}
-        >
-          <CreditCard className='size-4 mr-2' />
-          Billing
+        <DropdownMenuItem asChild>
+          <Link href='/billing' className='flex items-center cursor-pointer'>
+            <CreditCard className='size-4 mr-2' />
+            Billing
+          </Link>
         </DropdownMenuItem>
         {role === UserRole.MODERATOR && (
-          <DropdownMenuItem
-            className='cursor-pointer'
-            onClick={() => handleNavigation('/moderator/posts')}
-          >
-            Moderator Dashboard
+          <DropdownMenuItem asChild>
+            <Link href='/moderator/posts' className='cursor-pointer'>
+              Moderator Dashboard
+            </Link>
           </DropdownMenuItem>
         )}
         {role === UserRole.ADMIN && (
-          <DropdownMenuItem
-            className='cursor-pointer'
-            onClick={() => handleNavigation('/admin')}
-          >
-            Admin Dashboard
+          <DropdownMenuItem asChild>
+            <Link href='/admin' className='cursor-pointer'>
+              Admin Dashboard
+            </Link>
           </DropdownMenuItem>
         )}
-        <LogoutButton>
-          <DropdownMenuItem className='cursor-pointer'>
-            <LogOut className='rotate-180 size-4 mr-2' />
-            Sign out
-          </DropdownMenuItem>
-        </LogoutButton>
+        <DropdownMenuItem asChild>
+          <LogoutButton>
+            <span className='flex items-center cursor-pointer'>
+              <LogOut className='rotate-180 size-4 mr-2' />
+              Sign out
+            </span>
+          </LogoutButton>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
