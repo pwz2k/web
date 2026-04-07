@@ -7,10 +7,11 @@ interface LogoutButtonProps {
 }
 
 export const LogoutButton = ({ children }: LogoutButtonProps) => {
-  const onClick = () => {
-    // Use the current origin to ensure proper redirect
-    const callbackUrl = window.location.origin;
-    signOut({ callbackUrl });
+  const onClick = async () => {
+    // Sign out without redirect, then manually redirect to avoid localhost issue
+    await signOut({ redirect: false });
+    // Manually redirect to the home page on the current domain
+    window.location.href = '/';
   };
 
   return (
