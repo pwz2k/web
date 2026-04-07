@@ -8,11 +8,13 @@ interface LogoutButtonProps {
 
 export const LogoutButton = ({ children }: LogoutButtonProps) => {
   const onClick = () => {
-    signOut({ callbackUrl: '/' });
+    // Use the current origin to ensure proper redirect
+    const callbackUrl = window.location.origin;
+    signOut({ callbackUrl });
   };
 
   return (
-    <span onClick={onClick} className='w-full'>
+    <span onClick={onClick} className='w-full cursor-pointer'>
       {children}
     </span>
   );

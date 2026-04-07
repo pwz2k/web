@@ -14,7 +14,7 @@ import PostCard from '../_components/post-card';
 import { useNewPost } from '../_hooks/use-new-post';
 import { useOpenProfile } from '../_hooks/use-open-profile';
 import { useOpenSettings } from '../_hooks/use-open-settings';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -29,21 +29,49 @@ export default function ProfilePage() {
   const { onOpen: onNewPostOpen } = useNewPost();
   const { onOpen: onProfileOpen } = useOpenProfile();
   const { onOpen: onSettingsOpen } = useOpenSettings();
+  
+  // Add timeout state to prevent infinite loading
+  const [timedOut, setTimedOut] = useState(false);
 
   const sessionLoading = sessionStatus === 'loading';
   const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
 
-  // Redirect to sign-in if unauthenticated (this shouldn't normally happen due to middleware)
+  // Redirect to sign-in if unauthenticated
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
       router.push('/auth/sign-in?callbackUrl=/profile');
     }
   }, [sessionStatus, router]);
 
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    if (sessionLoading || profileLoading) {
+      const timer = setTimeout(() => {
+        setTimedOut(true);
+      }, 10000); // 10 second timeout
+      
+      return () => clearTimeout(timer);
+    }
+  }, [sessionLoading, profileLoading]);
+
+  // If timed out, try to refresh
+  if (timedOut && (sessionLoading || profileLoading)) {
+    return (
+      <div className='flex flex-col items-center justify-center gap-4'>
+        <p className='text-muted-foreground text-center'>
+          Taking too long? Try refreshing the page.
+        </p>
+        <Button variant='secondary' onClick={() => window.location.reload()}>
+          Refresh Page
+        </Button>
+      </div>
+    );
+  }
+
   // Show loading while session is loading or profile is loading
   if (sessionLoading || profileLoading || sessionStatus === 'unauthenticated') {
     return (
-      <div className='flex items-center justify-center'>
+      <div className='flex items-center justify-center min-h-[50vh]'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
       </div>
     );
@@ -53,7 +81,7 @@ export default function ProfilePage() {
     return (
       <div className='flex flex-col items-center justify-center gap-4 px-4 py-8'>
         <p className='text-muted-foreground text-center'>
-          Could not load profile. The session may still be updating.
+          Could not load profile. Please try again.
         </p>
         <Button variant='secondary' onClick={() => refetch()}>
           Try again

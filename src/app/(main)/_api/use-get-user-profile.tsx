@@ -4,17 +4,9 @@ import { useSession } from 'next-auth/react';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { client } from '@/lib/hono';
 import { convertAmountFromMiliunits } from '@/lib/utils';
-import { useEffect } from 'react';
 
 export const useGetUserProfile = () => {
-  const { status, update } = useSession();
-
-  // Force session update when component mounts to ensure fresh data
-  useEffect(() => {
-    if (status === 'authenticated') {
-      update();
-    }
-  }, [status, update]);
+  const { status } = useSession();
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.USER_PROFILE],
@@ -40,7 +32,7 @@ export const useGetUserProfile = () => {
     },
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 60 * 1000, // Cache for 1 minute
   });
 
   return { ...query, sessionStatus: status };
