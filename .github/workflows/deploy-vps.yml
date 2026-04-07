@@ -1,7 +1,17 @@
 # Required repo secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY (private key for SSH).
-# Optional: add `port: 22` under `with:` if SSH is not on the default port.
-# On the VPS, the SSH user must be able to run git, npm, pm2, prisma, and reload nginx.
-# Non-interactive SSH often skips .bashrc (no npm in PATH). The script below sources shell + nvm first.
+# Optional: `port` if SSH is not on 22 (set in `with:` below).
+#
+# If deploy fails with: dial tcp *:22: i/o timeout
+#   GitHub Actions cannot reach your VPS on TCP 22. This is network/firewall, not the deploy script.
+#   - Use the server's PUBLIC IPv4 in VPS_HOST (not a private/LAN IP).
+#   - Hostinger hPanel / VPS firewall: allow inbound TCP 22 from anywhere (0.0.0.0/0) for CI deploys,
+#     or use a self-hosted runner on the VPS instead of appleboy/ssh-action.
+#   - On the VPS: `sudo ufw allow 22/tcp` and `sudo ufw status` (or disable ufw briefly to test).
+#   - From your PC (not on the same LAN as the server): `nc -vz YOUR_PUBLIC_IP 22` — must succeed.
+#   - If SSH listens on another port, set `port:` below to match sshd_config.
+#
+# On the VPS, the deploy user must run git, npm, pm2, and reload nginx.
+# Non-interactive SSH often skips .bashrc; the script sources profile + nvm so npm is on PATH.
 
 name: Deploy to Hostinger VPS
 
@@ -41,6 +51,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 120s
+          command_timeout: 20m
           script_stop: true
           script: |
             set -e

@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 
 import authConfig from '@/auth.config';
+import { getToken } from 'next-auth/jwt';
 
 const { auth } = NextAuth(authConfig);
 
@@ -34,6 +35,12 @@ export default auth(async (req) => {
   // Use req.auth directly instead of currentUser() which doesn't work in Edge Runtime
   const authData = req.auth;
   const user = authData?.user;
+  // In some deployments, NextAuth middleware's `req.auth.user` can be missing custom fields (e.g. role).
+  // Fall back to decoding the JWT so role-based routing works reliably.
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const userRole = (user?.role ?? token?.role) as UserRole | undefined;
+  const banned = (user?.banned ?? token?.banned) as boolean | undefined;
+  const suspended = (user?.suspended ?? token?.suspended) as Date | string | null | undefined;
 
   const isLoggedIn = !!authData;
 
@@ -45,9 +52,7 @@ export default auth(async (req) => {
   const isAuthRoute = authRoutes.includes(pathname);
   const isBannedRoute = bannedRoutes.includes(pathname);
 
-  if (user) {
-    const { banned, suspended } = user;
-
+  if (authData) {
     if (isBannedRoute) {
       // Redirect if the user is not banned or the suspension has expired
       if (!banned && (!suspended || new Date(suspended) < new Date())) {
@@ -95,12 +100,16 @@ export default auth(async (req) => {
     );
   }
 
-  if (isAdminRoute && user?.role !== UserRole.ADMIN) {
+  if (isAdminRoute && userRole !== UserRole.ADMIN) {
     return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
   }
 
   // Moderator routes can be accessed by both MODERATOR and ADMIN roles
-  if (isModeratorRoute && user?.role !== UserRole.MODERATOR && user?.role !== UserRole.ADMIN) {
+  if (
+    isModeratorRoute &&
+    userRole !== UserRole.MODERATOR &&
+    userRole !== UserRole.ADMIN
+  ) {
     return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
   }
 
