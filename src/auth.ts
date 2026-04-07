@@ -64,6 +64,16 @@ export const {
         token.sub = user.id;
         token.email = user.email;
         token.name = user.name;
+        // Include role from authorize callback
+        if ('role' in user) {
+          token.role = user.role as UserRole;
+        }
+        if ('banned' in user) {
+          token.banned = user.banned as boolean;
+        }
+        if ('suspended' in user) {
+          token.suspended = user.suspended as Date | null;
+        }
       }
 
       // Handle session update trigger

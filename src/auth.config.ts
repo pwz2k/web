@@ -42,7 +42,10 @@ export default {
           return { 
             id: user.id, 
             email: user.email, 
-            name: user.name || user.username 
+            name: user.name || user.username,
+            role: user.role,
+            banned: user.banned,
+            suspended: user.suspended,
           };
         }
 
