@@ -49,7 +49,8 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [locationFilter, setLocationFilter] = useState<string>('');
 
-  const users = data?.data ?? [];
+  // Memoize users to prevent unnecessary re-renders
+  const users = useMemo(() => data?.data ?? [], [data?.data]);
   const pagination = data?.pagination;
 
   const getRoleBadge = (role: UserRole) => {

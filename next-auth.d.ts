@@ -25,13 +25,13 @@ declare module 'next-auth/jwt' {
     role?: UserRole;
     username?: string;
     name?: string | null;
-    email?: string;
-    image?: string;
+    email?: string | null;
+    image?: string | null;
     banned?: boolean;
     suspended?: Date | null;
-    gender?: Gender;
-    sexualOrientation?: SexualOrientation;
-    location?: string;
-    ipAddress?: string;
+    gender?: Gender | null;
+    sexualOrientation?: SexualOrientation | null;
+    location?: string | null;
+    ipAddress?: string | null;
   }
 }
