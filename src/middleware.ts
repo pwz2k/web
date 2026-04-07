@@ -43,7 +43,9 @@ export default auth(async (req) => {
   const banned = (user?.banned ?? token?.banned) as boolean | undefined;
   const suspended = (user?.suspended ?? token?.suspended) as Date | string | null | undefined;
 
-  const isLoggedIn = !!authData;
+  // `req.auth` can be missing in some hosting/edge setups even when the session cookie exists.
+  // Using `getToken` makes "logged in" detection consistent for protected routes like /profile, /billing.
+  const isLoggedIn = !!authData || !!token;
 
   const isApiRoute = pathname.startsWith(apiPrefix);
   const isPublicRoute = publicRoutes.includes(pathname);
