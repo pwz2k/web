@@ -88,20 +88,10 @@ export default auth(async (req) => {
     }
     return;
   }
-
-  if (!isLoggedIn && !isPublicRoute) {
-    let callbackUrl = nextUrl.pathname;
-
-    if (nextUrl.search) {
-      callbackUrl += nextUrl.search;
-    }
-
-    const encodedCallbackUrl = encodeURIComponent(callbackUrl);
-
-    return Response.redirect(
-      new URL(`/auth/sign-in?callbackUrl=${encodedCallbackUrl}`, nextUrl)
-    );
-  }
+  // NOTE:
+  // Auth gating for protected pages is enforced in route-group layouts (e.g. (main), (admin), (moderator)).
+  // This avoids edge-runtime session detection inconsistencies that can cause redirect loops.
+  void isPublicRoute;
 
   // NOTE:
   // Role-based gating for `/admin` and `/moderator` is enforced in their respective route-group layouts.
