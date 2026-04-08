@@ -24,8 +24,7 @@ export default function ProfilePage() {
     isSuccess,
     isError,
     refetch,
-    sessionStatus,
-  } = useGetUserProfile({ eager: true });
+  } = useGetUserProfile({ forAuthPage: true });
 
   const { onOpen: onNewPostOpen } = useNewPost();
   const { onOpen: onProfileOpen } = useOpenProfile();
@@ -33,9 +32,7 @@ export default function ProfilePage() {
   
   const [timedOut, setTimedOut] = useState(false);
 
-  const stillLoading =
-    sessionStatus !== 'unauthenticated' &&
-    (sessionStatus === 'loading' || isPending || isFetching);
+  const stillLoading = (isPending || isFetching) && !isError;
 
   useEffect(() => {
     if (!stillLoading) return;

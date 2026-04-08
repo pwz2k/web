@@ -34,28 +34,29 @@ export function UserMenuDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {/*
-          Radix closes the menu on select; without preventDefault the Link’s client navigation
-          often never runs. prefetch={false} avoids stale prefetched RSC from before login.
+          Full load for profile/billing: client-side navigation + SessionProvider often leaves
+          `useSession` out of sync with the cookie until refresh; `router.refresh` + soft nav
+          still fails on some hosts. Hard assign matches “refresh fixes it”.
         */}
         <DropdownMenuItem
-          asChild
-          className='cursor-pointer'
-          onSelect={(e) => e.preventDefault()}
+          className='cursor-pointer flex items-center'
+          onSelect={(e) => {
+            e.preventDefault();
+            window.location.assign('/profile');
+          }}
         >
-          <Link prefetch={false} href='/profile' className='flex items-center'>
-            <User className='size-4 mr-2' />
-            Profile
-          </Link>
+          <User className='size-4 mr-2' />
+          Profile
         </DropdownMenuItem>
         <DropdownMenuItem
-          asChild
-          className='cursor-pointer'
-          onSelect={(e) => e.preventDefault()}
+          className='cursor-pointer flex items-center'
+          onSelect={(e) => {
+            e.preventDefault();
+            window.location.assign('/billing');
+          }}
         >
-          <Link prefetch={false} href='/billing' className='flex items-center'>
-            <CreditCard className='size-4 mr-2' />
-            Billing
-          </Link>
+          <CreditCard className='size-4 mr-2' />
+          Billing
         </DropdownMenuItem>
         {role === UserRole.MODERATOR && (
           <DropdownMenuItem

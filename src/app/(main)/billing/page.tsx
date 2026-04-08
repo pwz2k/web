@@ -21,17 +21,14 @@ export default function BillingPage() {
     isSuccess,
     isError,
     refetch,
-    sessionStatus,
-  } = useGetUserProfile({ eager: true });
+  } = useGetUserProfile({ forAuthPage: true });
 
   const { onOpen: onOpenRequestAPayout } = useNewRequestAPayout();
   const { onOpen: onOpenAddFunds } = useNewAddFunds();
 
   const [timedOut, setTimedOut] = useState(false);
 
-  const stillLoading =
-    sessionStatus !== 'unauthenticated' &&
-    (sessionStatus === 'loading' || isPending || isFetching);
+  const stillLoading = (isPending || isFetching) && !isError;
 
   useEffect(() => {
     if (!stillLoading) return;

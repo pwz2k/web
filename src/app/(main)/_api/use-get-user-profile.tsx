@@ -6,16 +6,18 @@ import { client } from '@/lib/hono';
 import { convertAmountFromMiliunits } from '@/lib/utils';
 
 /**
- * @param eager - Use on server-protected pages (profile, billing). Fetches while `useSession` is still
- *   `loading` so the query isn't blocked after sign-in + client navigation (cookie is often valid already).
+ * @param forAuthPage - Profile, billing, etc.: layout already enforces `currentUser()` on the server.
+ *   Always run the query (no `useSession` gate). The client session can incorrectly stay
+ *   `loading`/`unauthenticated` after SPA navigation while cookies are valid — gating on it disabled
+ *   the fetch and left the page spinning forever.
  */
-export const useGetUserProfile = (options?: { eager?: boolean }) => {
-  const eager = options?.eager === true;
+export const useGetUserProfile = (options?: { forAuthPage?: boolean }) => {
+  const forAuthPage = options?.forAuthPage === true;
   const { status } = useSession();
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    enabled: eager ? status !== 'unauthenticated' : status === 'authenticated',
+    enabled: forAuthPage ? true : status === 'authenticated',
     queryFn: async () => {
       const response = await client.api.user.profile.$get();
 
@@ -46,9 +48,9 @@ export const useGetUserProfile = (options?: { eager?: boolean }) => {
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-    // Profile JSON is relatively stable; avoid refetching on every navigation.
-    staleTime: 5 * 60 * 1000,
+    staleTime: forAuthPage ? 0 : 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
+    ...(forAuthPage ? { refetchOnMount: 'always' as const } : {}),
   });
 
   return { ...query, sessionStatus: status };
