@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { BadgeCheck, CircleFadingPlus, Loader2, Settings } from 'lucide-react';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { useGetNextMilestone } from '../_api/use-get-next-milestone';
 import { useGetUserPosts } from '../_api/use-get-user-posts';
 import { useGetUserProfile } from '../_api/use-get-user-profile';
@@ -17,7 +17,6 @@ import { useOpenSettings } from '../_hooks/use-open-settings';
 import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
-  const router = useRouter();
   const {
     data: user,
     isLoading: isUserLoading,
@@ -36,20 +35,13 @@ export default function ProfilePage() {
   const sessionLoading = sessionStatus === 'loading';
   const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
 
-  // Redirect to sign-in if unauthenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/auth/sign-in?callbackUrl=/profile');
-    }
-  }, [sessionStatus, router]);
-
   // Add timeout to prevent infinite loading
   useEffect(() => {
     if (sessionLoading || profileLoading) {
       const timer = setTimeout(() => {
         setTimedOut(true);
       }, 10000); // 10 second timeout
-      
+
       return () => clearTimeout(timer);
     }
   }, [sessionLoading, profileLoading]);
@@ -69,7 +61,7 @@ export default function ProfilePage() {
   }
 
   // Show loading while session is loading or profile is loading
-  if (sessionLoading || profileLoading || sessionStatus === 'unauthenticated') {
+  if (sessionLoading || profileLoading) {
     return (
       <div className='flex items-center justify-center min-h-[50vh]'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />

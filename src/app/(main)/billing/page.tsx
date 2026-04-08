@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { useGetUserProfile } from '../_api/use-get-user-profile';
 import MilestonesCard from '../_components/milestones-card';
 import PayoutMethodCard from '../_components/payout-method-card';
@@ -14,7 +14,6 @@ import { useNewRequestAPayout } from '../_hooks/use-new-request-a-payout';
 import { useEffect, useState } from 'react';
 
 export default function BillingPage() {
-  const router = useRouter();
   const {
     data: user,
     isLoading: isUserLoading,
@@ -31,13 +30,6 @@ export default function BillingPage() {
   
   // Add timeout state to prevent infinite loading
   const [timedOut, setTimedOut] = useState(false);
-
-  // Redirect to sign-in if unauthenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/auth/sign-in?callbackUrl=/billing');
-    }
-  }, [sessionStatus, router]);
 
   // Add timeout to prevent infinite loading
   useEffect(() => {
@@ -65,7 +57,7 @@ export default function BillingPage() {
   }
 
   // Show loading while session is loading or profile is loading
-  if (sessionLoading || profileLoading || sessionStatus === 'unauthenticated') {
+  if (sessionLoading || profileLoading) {
     return (
       <div className='flex items-center justify-center min-h-[50vh]'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
