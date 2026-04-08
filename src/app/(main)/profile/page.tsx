@@ -25,51 +25,32 @@ export default function ProfilePage() {
     isError,
     refetch,
     sessionStatus,
-  } = useGetUserProfile();
+  } = useGetUserProfile({ eager: true });
 
   const { onOpen: onNewPostOpen } = useNewPost();
   const { onOpen: onProfileOpen } = useOpenProfile();
   const { onOpen: onSettingsOpen } = useOpenSettings();
   
-  // Add timeout state to prevent infinite loading
   const [timedOut, setTimedOut] = useState(false);
 
-  const sessionLoading = sessionStatus === 'loading';
-  // Client navigations: wait for session + profile query; `isLoading` alone can miss pending fetches.
-  const profileLoading =
-    sessionStatus === 'authenticated' && (isPending || isFetching);
+  const stillLoading =
+    sessionStatus !== 'unauthenticated' &&
+    (sessionStatus === 'loading' || isPending || isFetching);
 
-  // Add timeout to prevent infinite loading
   useEffect(() => {
-    if (sessionLoading || profileLoading) {
-      const timer = setTimeout(() => {
-        setTimedOut(true);
-      }, 10000); // 10 second timeout
+    if (!stillLoading) return;
+    const timer = setTimeout(() => setTimedOut(true), 10_000);
+    return () => clearTimeout(timer);
+  }, [stillLoading]);
 
-      return () => clearTimeout(timer);
-    }
-  }, [sessionLoading, profileLoading]);
-
-  // If timed out, try to refresh
-  if (timedOut && (sessionLoading || profileLoading)) {
+  if (user) {
     return (
-      <div className='flex flex-col items-center justify-center gap-4'>
-        <p className='text-muted-foreground text-center'>
-          Taking too long? Try refreshing the page.
-        </p>
-        <Button variant='secondary' onClick={() => window.location.reload()}>
-          Refresh Page
-        </Button>
-      </div>
-    );
-  }
-
-  // Show loading while session is loading or profile is loading
-  if (sessionLoading || profileLoading) {
-    return (
-      <div className='flex items-center justify-center min-h-[50vh]'>
-        <Loader2 className='size-12 animate-spin text-muted-foreground' />
-      </div>
+      <ProfileContent
+        user={user}
+        onNewPostOpen={onNewPostOpen}
+        onProfileOpen={onProfileOpen}
+        onSettingsOpen={onSettingsOpen}
+      />
     );
   }
 
@@ -86,12 +67,20 @@ export default function ProfilePage() {
     );
   }
 
-  // Only 404 after a successful response with no user — never on loading/race (fixes first-visit notFound).
-  if (sessionStatus === 'authenticated' && isSuccess && !user) {
-    return notFound();
+  if (timedOut && stillLoading) {
+    return (
+      <div className='flex flex-col items-center justify-center gap-4'>
+        <p className='text-muted-foreground text-center'>
+          Taking too long? Try refreshing the page.
+        </p>
+        <Button variant='secondary' onClick={() => window.location.reload()}>
+          Refresh Page
+        </Button>
+      </div>
+    );
   }
 
-  if (!user) {
+  if (stillLoading) {
     return (
       <div className='flex items-center justify-center min-h-[50vh]'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
@@ -99,6 +88,33 @@ export default function ProfilePage() {
     );
   }
 
+  if (isSuccess && !user) {
+    return notFound();
+  }
+
+  return (
+    <div className='flex items-center justify-center min-h-[50vh]'>
+      <Loader2 className='size-12 animate-spin text-muted-foreground' />
+    </div>
+  );
+}
+
+type ProfileUser = NonNullable<ReturnType<typeof useGetUserProfile>['data']>;
+
+function ProfileContent({
+  user,
+  onNewPostOpen,
+  onProfileOpen,
+  onSettingsOpen,
+}: {
+  user: ProfileUser;
+  onNewPostOpen: () => void;
+  onProfileOpen: () => void;
+  onSettingsOpen: (s: {
+    anonymous: boolean;
+    sent_email_notifications: boolean;
+  }) => void;
+}) {
   return (
     <div className='px-4 py-6 sm:px-6 sm:py-8 space-y-8'>
       <div className='flex items-center justify-between'>

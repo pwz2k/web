@@ -22,48 +22,58 @@ export default function BillingPage() {
     isError,
     refetch,
     sessionStatus,
-  } = useGetUserProfile();
+  } = useGetUserProfile({ eager: true });
 
   const { onOpen: onOpenRequestAPayout } = useNewRequestAPayout();
   const { onOpen: onOpenAddFunds } = useNewAddFunds();
 
-  const sessionLoading = sessionStatus === 'loading';
-  const profileLoading =
-    sessionStatus === 'authenticated' && (isPending || isFetching);
-  
-  // Add timeout state to prevent infinite loading
   const [timedOut, setTimedOut] = useState(false);
 
-  // Add timeout to prevent infinite loading
+  const stillLoading =
+    sessionStatus !== 'unauthenticated' &&
+    (sessionStatus === 'loading' || isPending || isFetching);
+
   useEffect(() => {
-    if (sessionLoading || profileLoading) {
-      const timer = setTimeout(() => {
-        setTimedOut(true);
-      }, 10000); // 10 second timeout
-      
-      return () => clearTimeout(timer);
-    }
-  }, [sessionLoading, profileLoading]);
+    if (!stillLoading) return;
+    const timer = setTimeout(() => setTimedOut(true), 10_000);
+    return () => clearTimeout(timer);
+  }, [stillLoading]);
 
-  // If timed out, try to refresh
-  if (timedOut && (sessionLoading || profileLoading)) {
+  if (user) {
     return (
-      <div className='flex flex-col items-center justify-center gap-4 px-4 py-8'>
-        <p className='text-muted-foreground text-center'>
-          Taking too long? Try refreshing the page.
-        </p>
-        <Button variant='secondary' onClick={() => window.location.reload()}>
-          Refresh Page
-        </Button>
-      </div>
-    );
-  }
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        <div className='flex flex-col gap-4'>
+          <Card className='border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl'>
+            <CardHeader>
+              <CardTitle>Total Balance</CardTitle>
+              <span className='text-tertiary text-5xl font-black'>
+                {formatCurrency(user.balance)}
+              </span>
+            </CardHeader>
+            <CardFooter className='space-x-4'>
+              <Button
+                onClick={onOpenAddFunds}
+                variant='tertiary'
+                className='px-8'
+              >
+                Add Funds
+              </Button>
+              <Button
+                onClick={onOpenRequestAPayout}
+                variant='quaternary'
+                className='px-8'
+              >
+                Request payout
+              </Button>
+            </CardFooter>
+          </Card>
 
-  // Show loading while session is loading or profile is loading
-  if (sessionLoading || profileLoading) {
-    return (
-      <div className='flex items-center justify-center min-h-[50vh]'>
-        <Loader2 className='size-12 animate-spin text-muted-foreground' />
+          <MilestonesCard />
+        </div>
+        <div className='flex flex-col gap-4'>
+          <TransactionCard />
+          <PayoutMethodCard />
+        </div>
       </div>
     );
   }
@@ -81,11 +91,20 @@ export default function BillingPage() {
     );
   }
 
-  if (sessionStatus === 'authenticated' && isSuccess && !user) {
-    return notFound();
+  if (timedOut && stillLoading) {
+    return (
+      <div className='flex flex-col items-center justify-center gap-4 px-4 py-8'>
+        <p className='text-muted-foreground text-center'>
+          Taking too long? Try refreshing the page.
+        </p>
+        <Button variant='secondary' onClick={() => window.location.reload()}>
+          Refresh Page
+        </Button>
+      </div>
+    );
   }
 
-  if (!user) {
+  if (stillLoading) {
     return (
       <div className='flex items-center justify-center min-h-[50vh]'>
         <Loader2 className='size-12 animate-spin text-muted-foreground' />
@@ -93,40 +112,13 @@ export default function BillingPage() {
     );
   }
 
-  return (
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-      <div className='flex flex-col gap-4'>
-        <Card className='border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl'>
-          <CardHeader>
-            <CardTitle>Total Balance</CardTitle>
-            <span className='text-tertiary text-5xl font-black'>
-              {formatCurrency(user.balance)}
-            </span>
-          </CardHeader>
-          <CardFooter className='space-x-4'>
-            <Button
-              onClick={onOpenAddFunds}
-              variant='tertiary'
-              className='px-8'
-            >
-              Add Funds
-            </Button>
-            <Button
-              onClick={onOpenRequestAPayout}
-              variant='quaternary'
-              className='px-8'
-            >
-              Request payout
-            </Button>
-          </CardFooter>
-        </Card>
+  if (isSuccess && !user) {
+    return notFound();
+  }
 
-        <MilestonesCard />
-      </div>
-      <div className='flex flex-col gap-4'>
-        <TransactionCard />
-        <PayoutMethodCard />
-      </div>
+  return (
+    <div className='flex items-center justify-center min-h-[50vh]'>
+      <Loader2 className='size-12 animate-spin text-muted-foreground' />
     </div>
   );
 }

@@ -5,14 +5,23 @@ import { QUERY_KEYS } from '@/constants/query-keys';
 import { client } from '@/lib/hono';
 import { convertAmountFromMiliunits } from '@/lib/utils';
 
-export const useGetUserProfile = () => {
+/**
+ * @param eager - Use on server-protected pages (profile, billing). Fetches while `useSession` is still
+ *   `loading` so the query isn't blocked after sign-in + client navigation (cookie is often valid already).
+ */
+export const useGetUserProfile = (options?: { eager?: boolean }) => {
+  const eager = options?.eager === true;
   const { status } = useSession();
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    enabled: status === 'authenticated',
+    enabled: eager ? status !== 'unauthenticated' : status === 'authenticated',
     queryFn: async () => {
       const response = await client.api.user.profile.$get();
+
+      if (response.status === 401) {
+        throw new Error('UNAUTHORIZED');
+      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch user profile');
@@ -30,7 +39,12 @@ export const useGetUserProfile = () => {
         totalSpent: convertAmountFromMiliunits(data.totalSpent ?? 0),
       };
     },
-    retry: 2,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+        return false;
+      }
+      return failureCount < 2;
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     // Profile JSON is relatively stable; avoid refetching on every navigation.
     staleTime: 5 * 60 * 1000,
