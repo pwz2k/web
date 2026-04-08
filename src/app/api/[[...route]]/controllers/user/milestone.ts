@@ -195,58 +195,58 @@ const app = new Hono()
       });
     }
 
-    // Calculate progress for each unachieved milestone
-    const milestonesWithProgress = await Promise.all(
-      unachievedMilestones.map(async (milestone) => {
-        let currentValue = 0;
-
-        // Determine current value based on milestone type
-        switch (milestone.type) {
-          case 'CASH_OUT':
-            // Count successful withdrawal transactions
-            const cashoutTransactions = await db.transactions.count({
-              where: {
-                userId: dbUser.id,
-                type: 'WITHDRAWAL',
-                status: 'COMPLETED',
-              },
-            });
-            currentValue = cashoutTransactions;
-            break;
-          case 'EARNINGS':
-            currentValue = dbUser.totalSpent;
-            break;
-          case 'VOTE_COUNT':
-            currentValue = dbUser.totalVotesGiven;
-            break;
-          case 'COMMENT_COUNT':
-            currentValue = dbUser.commentCount;
-            break;
-          case 'PHOTO_COUNT':
-            currentValue = dbUser.photoCount;
-            break;
-          case 'VOTING_STREAK':
-            currentValue = dbUser.votingStreak;
-            break;
-          default:
-            currentValue = 0;
-        }
-
-        // Calculate progress percentage (capped at 100%)
-        const progress = Math.min(
-          Math.round((currentValue / milestone.threshold) * 100),
-          100
-        );
-        const remaining = Math.max(milestone.threshold - currentValue, 0);
-
-        return {
-          ...milestone,
-          currentValue,
-          progress,
-          remaining,
-        };
-      })
+    const needsCashoutProgress = unachievedMilestones.some(
+      (m) => m.type === 'CASH_OUT'
     );
+    const cashoutCount = needsCashoutProgress
+      ? await db.transactions.count({
+          where: {
+            userId: dbUser.id,
+            type: 'WITHDRAWAL',
+            status: 'COMPLETED',
+          },
+        })
+      : 0;
+
+    const milestonesWithProgress = unachievedMilestones.map((milestone) => {
+      let currentValue = 0;
+
+      switch (milestone.type) {
+        case 'CASH_OUT':
+          currentValue = cashoutCount;
+          break;
+        case 'EARNINGS':
+          currentValue = dbUser.totalSpent;
+          break;
+        case 'VOTE_COUNT':
+          currentValue = dbUser.totalVotesGiven;
+          break;
+        case 'COMMENT_COUNT':
+          currentValue = dbUser.commentCount;
+          break;
+        case 'PHOTO_COUNT':
+          currentValue = dbUser.photoCount;
+          break;
+        case 'VOTING_STREAK':
+          currentValue = dbUser.votingStreak;
+          break;
+        default:
+          currentValue = 0;
+      }
+
+      const progress = Math.min(
+        Math.round((currentValue / milestone.threshold) * 100),
+        100
+      );
+      const remaining = Math.max(milestone.threshold - currentValue, 0);
+
+      return {
+        ...milestone,
+        currentValue,
+        progress,
+        remaining,
+      };
+    });
 
     // Sort by progress in descending order (closest to completion first)
     milestonesWithProgress.sort((a, b) => b.progress - a.progress);

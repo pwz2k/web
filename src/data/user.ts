@@ -29,6 +29,29 @@ export const getUserById = async (id: string) => {
   }
 };
 
+/** Slim fetch for JWT refresh — avoids loading full User row on every session read. */
+export const getUserSessionFields = async (id: string) => {
+  try {
+    return await db.user.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        email: true,
+        username: true,
+        image: true,
+        role: true,
+        banned: true,
+        suspended: true,
+        gender: true,
+        sexualOrientation: true,
+        location: true,
+      },
+    });
+  } catch {
+    return null;
+  }
+};
+
 export const getDeviceIpAddress = async () => {
   const requestHeaders = headers();
 

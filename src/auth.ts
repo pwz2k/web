@@ -4,7 +4,13 @@ import NextAuth from 'next-auth';
 import authConfig from '@/auth.config';
 import { db } from '@/lib/db';
 import { Gender, SexualOrientation, UserRole } from '@prisma/client';
-import { getDeviceIpAddress, getUserById } from './data/user';
+import {
+  getDeviceIpAddress,
+  getUserSessionFields,
+} from './data/user';
+
+/** How often JWT callback reloads user from DB (session is read on layout + each API). */
+const JWT_DB_REFRESH_SEC = 90;
 
 export const {
   handlers: { GET, POST },
@@ -59,12 +65,14 @@ export const {
       return session;
     },
     async jwt({ token, user, trigger, session }) {
+      const now = Math.floor(Date.now() / 1000);
+
       // On initial sign-in, the 'user' parameter is populated from authorize()
       if (user) {
         token.sub = user.id;
         token.email = user.email;
         token.name = user.name;
-        // Include role from authorize callback
+        // Include role from authorize client
         if ('role' in user) {
           token.role = user.role as UserRole;
         }
@@ -74,6 +82,15 @@ export const {
         if ('suspended' in user) {
           token.suspended = user.suspended as Date | null;
         }
+        if ('username' in user && user.username != null) {
+          token.username = user.username as string;
+        }
+        if ('image' in user) {
+          token.image = user.image as string | null;
+        }
+        token.dbRefreshedAt = now;
+        token.ipAddress = (await getDeviceIpAddress()) ?? token.ipAddress ?? null;
+        return token;
       }
 
       // Handle session update trigger
@@ -81,11 +98,23 @@ export const {
         token = { ...token, ...session };
       }
 
-      // On subsequent requests, refresh user data from database
       if (!token.sub) return token;
 
-      const existingUser = await getUserById(token.sub);
-      const ipAddress = await getDeviceIpAddress();
+      token.ipAddress =
+        (await getDeviceIpAddress()) ?? token.ipAddress ?? null;
+
+      const lastRefresh =
+        typeof token.dbRefreshedAt === 'number' ? token.dbRefreshedAt : null;
+      const shouldRefreshDb =
+        trigger === 'update' ||
+        lastRefresh === null ||
+        now - lastRefresh >= JWT_DB_REFRESH_SEC;
+
+      if (!shouldRefreshDb) {
+        return token;
+      }
+
+      const existingUser = await getUserSessionFields(token.sub);
 
       if (!existingUser) return token;
 
@@ -101,7 +130,7 @@ export const {
       token.gender = existingUser.gender;
       token.sexualOrientation = existingUser.sexualOrientation;
       token.location = existingUser.location;
-      token.ipAddress = ipAddress;
+      token.dbRefreshedAt = now;
 
       return token;
     },

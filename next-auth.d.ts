@@ -21,6 +21,8 @@ declare module 'next-auth' {
 
 declare module 'next-auth/jwt' {
   interface JWT {
+    /** UNIX seconds; last time token fields were refreshed from DB */
+    dbRefreshedAt?: number;
     id?: string;
     role?: UserRole;
     username?: string | null;

@@ -23,11 +23,8 @@ const app = new Hono().get('/', async (c) => {
     orderBy: {
       createdAt: 'desc',
     },
+    take: 72,
   });
-
-  if (!posts.length) {
-    return c.json({ message: 'No posts found' }, 404);
-  }
 
   return c.json({ success: true, data: posts }, 200);
 });
