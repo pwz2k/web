@@ -19,7 +19,9 @@ import { useEffect, useState } from 'react';
 export default function ProfilePage() {
   const {
     data: user,
-    isLoading: isUserLoading,
+    isPending,
+    isFetching,
+    isSuccess,
     isError,
     refetch,
     sessionStatus,
@@ -33,7 +35,9 @@ export default function ProfilePage() {
   const [timedOut, setTimedOut] = useState(false);
 
   const sessionLoading = sessionStatus === 'loading';
-  const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
+  // Client navigations: wait for session + profile query; `isLoading` alone can miss pending fetches.
+  const profileLoading =
+    sessionStatus === 'authenticated' && (isPending || isFetching);
 
   // Add timeout to prevent infinite loading
   useEffect(() => {
@@ -82,8 +86,17 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
+  // Only 404 after a successful response with no user — never on loading/race (fixes first-visit notFound).
+  if (sessionStatus === 'authenticated' && isSuccess && !user) {
     return notFound();
+  }
+
+  if (!user) {
+    return (
+      <div className='flex items-center justify-center min-h-[50vh]'>
+        <Loader2 className='size-12 animate-spin text-muted-foreground' />
+      </div>
+    );
   }
 
   return (

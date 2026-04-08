@@ -16,7 +16,9 @@ import { useEffect, useState } from 'react';
 export default function BillingPage() {
   const {
     data: user,
-    isLoading: isUserLoading,
+    isPending,
+    isFetching,
+    isSuccess,
     isError,
     refetch,
     sessionStatus,
@@ -26,7 +28,8 @@ export default function BillingPage() {
   const { onOpen: onOpenAddFunds } = useNewAddFunds();
 
   const sessionLoading = sessionStatus === 'loading';
-  const profileLoading = sessionStatus === 'authenticated' && isUserLoading;
+  const profileLoading =
+    sessionStatus === 'authenticated' && (isPending || isFetching);
   
   // Add timeout state to prevent infinite loading
   const [timedOut, setTimedOut] = useState(false);
@@ -78,8 +81,16 @@ export default function BillingPage() {
     );
   }
 
-  if (!user) {
+  if (sessionStatus === 'authenticated' && isSuccess && !user) {
     return notFound();
+  }
+
+  if (!user) {
+    return (
+      <div className='flex items-center justify-center min-h-[50vh]'>
+        <Loader2 className='size-12 animate-spin text-muted-foreground' />
+      </div>
+    );
   }
 
   return (
