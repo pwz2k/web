@@ -42,6 +42,7 @@ import Lottie from 'react-lottie';
 import { useCreateTransaction } from '../_api/use-create-transaction';
 import { useGetUserProfile } from '../_api/use-get-user-profile';
 import { usePaypalCheckoutMutation } from '../_api/use-paypal-checkout';
+import { usePayramCheckoutMutation } from '../_api/use-payram-checkout';
 import { useStripeCheckoutMutation } from '../_api/use-stripe-checkout';
 import { useNewAddFunds } from '../_hooks/use-new-add-funds';
 
@@ -63,6 +64,8 @@ export function AddFundsForm({
 
   const { mutate: stripeCheckoutMutate, isPending: isStripeCheckoutPending } =
     useStripeCheckoutMutation();
+  const { mutate: payramCheckoutMutate, isPending: isPayramCheckoutPending } =
+    usePayramCheckoutMutation();
   const { mutate: paypalCheckoutMutate, isPending: isPaypalCheckoutPending } =
     usePaypalCheckoutMutation();
   const { mutate, isPending: isTransactionPending } = useCreateTransaction();
@@ -84,7 +87,10 @@ export function AddFundsForm({
     }
   }, [success]);
 
-  const isCheckoutPending = isStripeCheckoutPending || isPaypalCheckoutPending;
+  const isCheckoutPending =
+    isStripeCheckoutPending ||
+    isPayramCheckoutPending ||
+    isPaypalCheckoutPending;
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -315,14 +321,38 @@ export function AddFundsForm({
             </div>
           )}
 
-        <Button
-          disabled={isPending}
-          type='submit'
-          variant='tertiary'
-          className='w-full text-center'
-        >
-          Add Funds
-        </Button>
+        <div className='flex flex-col gap-3'>
+          <Button
+            disabled={isPending}
+            type='submit'
+            variant='tertiary'
+            className='w-full text-center'
+          >
+            {selectedMethod === AvailablePayoutMethods.STRIPE
+              ? 'Pay with Stripe'
+              : 'Add Funds'}
+          </Button>
+          {selectedMethod === AvailablePayoutMethods.STRIPE && (
+            <Button
+              disabled={isPending}
+              type='button'
+              variant='quaternary'
+              className='w-full text-center'
+              onClick={() => {
+                const raw = form.getValues('amount');
+                if (!raw || Number(raw) <= 0) {
+                  form.setError('amount', { message: 'Enter a valid amount' });
+                  return;
+                }
+                payramCheckoutMutate({
+                  amount: convertAmountToMiliunits(Number(raw) / 10),
+                });
+              }}
+            >
+              Pay with Payram
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );

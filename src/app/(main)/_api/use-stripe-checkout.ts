@@ -15,8 +15,12 @@ const createCheckoutSession = async ({ amount }: { amount: number }) => {
     throw new Error('Failed to create checkout session');
   }
 
-  const { sessionId } = await response.json();
-  return sessionId;
+  const data = (await response.json()) as { sessionId?: string };
+  if (!data.sessionId) {
+    throw new Error('Failed to create checkout session');
+  }
+
+  return data.sessionId;
 };
 
 // React Query Mutation Hook
