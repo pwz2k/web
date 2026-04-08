@@ -33,28 +33,48 @@ export function UserMenuDropdown({
         <ChevronDown className='size-6 text-white' />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem asChild className='cursor-pointer'>
-          <Link href='/profile' className='flex items-center'>
+        {/*
+          Radix closes the menu on select; without preventDefault the Link’s client navigation
+          often never runs. prefetch={false} avoids stale prefetched RSC from before login.
+        */}
+        <DropdownMenuItem
+          asChild
+          className='cursor-pointer'
+          onSelect={(e) => e.preventDefault()}
+        >
+          <Link prefetch={false} href='/profile' className='flex items-center'>
             <User className='size-4 mr-2' />
             Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className='cursor-pointer'>
-          <Link href='/billing' className='flex items-center'>
+        <DropdownMenuItem
+          asChild
+          className='cursor-pointer'
+          onSelect={(e) => e.preventDefault()}
+        >
+          <Link prefetch={false} href='/billing' className='flex items-center'>
             <CreditCard className='size-4 mr-2' />
             Billing
           </Link>
         </DropdownMenuItem>
         {role === UserRole.MODERATOR && (
-          <DropdownMenuItem asChild className='cursor-pointer'>
-            <Link href='/moderator/posts'>
+          <DropdownMenuItem
+            asChild
+            className='cursor-pointer'
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Link prefetch={false} href='/moderator/posts'>
               Moderator Dashboard
             </Link>
           </DropdownMenuItem>
         )}
         {role === UserRole.ADMIN && (
-          <DropdownMenuItem asChild className='cursor-pointer'>
-            <Link href='/admin'>
+          <DropdownMenuItem
+            asChild
+            className='cursor-pointer'
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Link prefetch={false} href='/admin'>
               Admin Dashboard
             </Link>
           </DropdownMenuItem>

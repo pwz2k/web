@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { LoginSchema } from '@/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -41,7 +41,6 @@ export default function SignInForm() {
 
   const [error, setError] = useState<string | undefined>('');
   const [success, setSuccess] = useState<string | undefined>('');
-  const [isPending, startTransition] = useTransition();
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -50,32 +49,27 @@ export default function SignInForm() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof LoginSchema>) => {
+  const onSubmit = form.handleSubmit(async (values) => {
     setError('');
     setSuccess('');
 
-    startTransition(() => {
-      login(values, callbackUrl)
-        .then((data) => {
-          if (data?.error) {
-            setError(data.error);
-          }
-
-          if (data?.success) {
-            form.reset();
-            setSuccess(data.success);
-          }
-        })
-        .catch((error) => {
-          // Next.js throws a redirect error which should be re-thrown to allow the redirect
-          // This is expected behavior for next-auth signIn
-          if (isRedirectError(error)) {
-            throw error;
-          }
-          setError('Something went wrong. Please try again.');
-        });
-    });
-  };
+    try {
+      const data = await login(values, callbackUrl);
+      if (data?.error) {
+        setError(data.error);
+      }
+      if (data?.success) {
+        form.reset();
+        setSuccess(data.success);
+      }
+    } catch (error) {
+      // Server `signIn` uses `redirect()` — must not swallow (breaks cookie + client nav until full reload).
+      if (isRedirectError(error)) {
+        throw error;
+      }
+      setError('Something went wrong. Please try again.');
+    }
+  });
 
   return (
     <Form {...form}>
@@ -83,7 +77,7 @@ export default function SignInForm() {
         className='space-y-6'
         action={signInFormAction}
         method='post'
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={onSubmit}
       >
         {callbackUrl ? (
           <input type='hidden' name='callbackUrl' value={callbackUrl} />
@@ -99,7 +93,7 @@ export default function SignInForm() {
                   type='email'
                   name='email'
                   placeholder='Email'
-                  disabled={isPending}
+                  disabled={form.formState.isSubmitting}
                   className='rounded-full border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl'
                   autoComplete='email'
                 />
@@ -119,7 +113,7 @@ export default function SignInForm() {
                   name='password'
                   placeholder='Password'
                   className='rounded-full border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl'
-                  disabled={isPending}
+                  disabled={form.formState.isSubmitting}
                   autoComplete='current-password'
                 />
               </FormControl>
@@ -131,7 +125,7 @@ export default function SignInForm() {
         <FormError message={error} />
         <Button
           type='submit'
-          disabled={isPending}
+          disabled={form.formState.isSubmitting}
           variant='tertiary'
           className='w-full py-6 font-medium'
         >
