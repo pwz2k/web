@@ -32,7 +32,9 @@ export const useGetUserProfile = () => {
     },
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-    staleTime: 60 * 1000, // Cache for 1 minute
+    // Profile JSON is relatively stable; avoid refetching on every navigation.
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   return { ...query, sessionStatus: status };

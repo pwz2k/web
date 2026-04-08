@@ -1,6 +1,7 @@
 import { RootErrorBoundary } from '@/components/root-error-boundary';
 import { cn } from '@/lib/utils';
 import Providers from '@/providers/provider';
+import { auth } from '@/auth';
 import type { Metadata } from 'next';
 import { Caveat, Space_Grotesk } from 'next/font/google';
 
@@ -22,11 +23,12 @@ export const metadata: Metadata = {
   title: 'Social Media',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang='en' className='dark' suppressHydrationWarning>
       <head>
@@ -66,7 +68,7 @@ export default function RootLayout({
           'antialiased'
         )}
       >
-        <Providers>
+        <Providers session={session}>
           <RootErrorBoundary>
             <div className='bg-gradient-image fixed inset-0'>
               <div className='relative h-screen overflow-y-auto'>

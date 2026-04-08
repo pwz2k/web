@@ -7,78 +7,98 @@ import {
 } from '@/schemas';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
+import { unstable_cache } from 'next/cache';
+
+/** Expensive: scans aggregates per creator — cached briefly to keep profile loads fast. */
+const computePercentileForUser = async (userId: string, userAvgRating: number) => {
+  const creatorsWithRatings = await db.post.groupBy({
+    by: ['creatorId'],
+    where: {
+      NOT: {
+        creatorId: userId,
+      },
+    },
+    _avg: {
+      weightedRating: true,
+    },
+  });
+
+  const totalCreators = creatorsWithRatings.length + 1;
+  if (totalCreators <= 1) return null;
+
+  const creatorsWithLowerRating = creatorsWithRatings.filter(
+    (creator) => (creator._avg.weightedRating || 0) < userAvgRating
+  ).length;
+
+  return Math.round((creatorsWithLowerRating / (totalCreators - 1)) * 100);
+};
 
 const app = new Hono()
   .get('/', async (c) => {
     try {
       const user = await currentUser();
-      if (!user || !user?.id) {
+      const userId = user?.id;
+      if (!user || !userId) {
         return c.json({ message: 'Unauthorized' }, 401);
       }
 
-      // Fetch the user with their payout methods
-      const dbUser = await db.user.findUnique({
-      where: { id: user.id },
-      include: {
-        PayoutMethod: true,
-        _count: {
-          select: {
-            post: true,
+      /** Percentile runs a heavy `groupBy` over creators — off by default. Set PROFILE_INCLUDE_PERCENTILE=true to enable. */
+      const includePercentile =
+        process.env.PROFILE_INCLUDE_PERCENTILE === '1' ||
+        process.env.PROFILE_INCLUDE_PERCENTILE === 'true';
+      const forceSkipPercentile =
+        process.env.SKIP_PROFILE_PERCENTILE === '1' ||
+        process.env.SKIP_PROFILE_PERCENTILE === 'true';
+
+      // Run independent queries in parallel (was sequential — added noticeable latency).
+      const [dbUser, receivedVotes, userPostsStats] = await Promise.all([
+        db.user.findUnique({
+          where: { id: userId },
+          include: {
+            PayoutMethod: true,
+            _count: {
+              select: {
+                post: true,
+              },
+            },
           },
-        },
-      },
-    });
-
-    const receivedVotes = await db.vote.count({
-      where: {
-        post: {
-          creatorId: user.id,
-        },
-      },
-    });
-
-    // Calculate the user's average post rating using Prisma aggregation
-    const userPostsStats = await db.post.aggregate({
-      where: { creatorId: user.id },
-      _avg: {
-        weightedRating: true,
-      },
-      _count: true,
-    });
-
-    let percentileStat = null;
-    const userAvgRating = userPostsStats._avg.weightedRating || 0;
-
-    // Only proceed with comparison calculation if user has posts
-    if (userPostsStats._count > 0 && userAvgRating > 0) {
-      // Get all creators with their average post ratings
-      const creatorsWithRatings = await db.post.groupBy({
-        by: ['creatorId'],
-        where: {
-          NOT: {
-            creatorId: user.id, // Exclude current user from the query
+        }),
+        db.vote.count({
+          where: {
+            post: {
+              creatorId: userId,
+            },
           },
-        },
-        _avg: {
-          weightedRating: true,
-        },
-      });
+        }),
+        db.post.aggregate({
+          where: { creatorId: userId },
+          _avg: {
+            weightedRating: true,
+          },
+          _count: true,
+        }),
+      ]);
 
-      // Count how many creators have a lower average rating
-      const totalCreators = creatorsWithRatings.length + 1; // +1 to include current user
-
-      if (totalCreators > 1) {
-        // Need at least one other creator for comparison
-        const creatorsWithLowerRating = creatorsWithRatings.filter(
-          (creator) => (creator._avg.weightedRating || 0) < userAvgRating
-        ).length;
-
-        // Calculate percentile (what percentage of creators the current user is better than)
-        percentileStat = Math.round(
-          (creatorsWithLowerRating / (totalCreators - 1)) * 100
-        );
+      if (!dbUser) {
+        return c.json({ message: 'User not found' }, 404);
       }
-    }
+
+      const userAvgRating = userPostsStats._avg.weightedRating || 0;
+
+      let percentileStat: number | null = null;
+      if (
+        includePercentile &&
+        !forceSkipPercentile &&
+        userPostsStats._count > 0 &&
+        userAvgRating > 0
+      ) {
+        const avgKey = String(Math.round(userAvgRating * 1e6));
+        percentileStat = await unstable_cache(
+          () => computePercentileForUser(userId, userAvgRating),
+          ['profile-percentile', userId, avgKey],
+          { revalidate: 180 }
+        )();
+      }
 
       return c.json({
         data: {

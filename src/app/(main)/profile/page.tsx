@@ -109,9 +109,11 @@ export default function ProfilePage() {
               <h5 className='text-white text-2xl font-bold'>{user.name}</h5>
               <BadgeCheck className='size-6 text-tertiary' />
             </div>
-            <p className='text-muted-foreground text-center lg:text-left'>
-              {`Your uploads are better than ${user.stats.percentileStat || 0}% of users.`}
-            </p>
+            {user.stats.percentileStat != null && (
+              <p className='text-muted-foreground text-center lg:text-left'>
+                {`Your uploads are better than ${user.stats.percentileStat}% of users.`}
+              </p>
+            )}
             <div className='flex flex-col lg:flex-row items-center gap-2'>
               <Button
                 onClick={onProfileOpen}
