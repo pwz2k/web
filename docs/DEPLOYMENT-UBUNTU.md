@@ -249,6 +249,10 @@ server {
     listen 80;
     server_name yourdomain.com www.yourdomain.com;
 
+    # Avoid 400 "Request Header Or Cookie Too Large" when browsers send big Cookie headers
+    # (e.g. NextAuth JWT after long sessions). Optional safety margin for Firefox.
+    large_client_header_buffers 4 32k;
+
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -321,4 +325,5 @@ For issues, check:
 
 - App logs: `pm2 logs uploto` or `docker logs uploto`
 - Nginx: `sudo tail -f /var/log/nginx/error.log`
+- **400 Request Header Or Cookie Too Large:** increase `large_client_header_buffers` in the `server` block (see section 7) and deploy the app’s JWT cookie slimming (long session cookies from NextAuth). Users can clear site cookies as a temporary workaround.
 - Database: `npx prisma db pull` or connect with `psql` to verify connectivity
