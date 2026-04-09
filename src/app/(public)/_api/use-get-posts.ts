@@ -13,7 +13,8 @@ interface PostsResponse {
 export const useGetPosts = (preference?: Gender, id?: string) => {
   return useInfiniteQuery<PostsResponse>({
     queryKey: [QUERY_KEYS.POST, preference, id],
-    staleTime: 60 * 1000, // 1 min: avoid refetching feed too often (DB on different region)
+    // 0 so MALE/FEMALE/BOTH switches and empty responses are not cached for 1m (felt like "no posts until cache clear").
+    staleTime: 0,
     queryFn: async ({ pageParam = 1 }) => {
       const response = await client.api.post.$get({
         query: { page: String(pageParam), preference, id },

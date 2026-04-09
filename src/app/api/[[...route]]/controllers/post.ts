@@ -205,25 +205,32 @@ const app = new Hono()
       // If no unseen posts are available, get random posts
       let randomPosts: any[] = [];
       if (candidatePosts.length === 0) {
-        // Only exclude self-created posts for authenticated users; exclude voted posts when possible.
-        let randomFilter: Record<string, unknown> = {
-          ...baseFilter,
-          ...(user && { creatorId: { not: user.id } }),
-          ...(votedPostIds.length > 0 && { id: { notIn: votedPostIds } }),
-        };
-
-        let totalPostCount = await db.post.count({ where: randomFilter as any });
-
-        // User has voted on every post — excluding votes leaves nothing; still show the catalog.
-        if (totalPostCount === 0 && votedPostIds.length > 0) {
-          randomFilter = {
-            ...baseFilter,
+        // Try progressively looser filters: gender+exclude votes → gender only → all genders+exclude votes → all posts.
+        // Preference alone can match zero rows (no creators with that gender, or null gender in DB).
+        const makeRandomFilter = (includeGender: boolean, excludeVotes: boolean) =>
+          ({
+            approvalStatus: { in: ['APPROVED', 'PENDING'] },
+            ...(includeGender && preference ? { creator: { gender: preference } } : {}),
             ...(user && { creatorId: { not: user.id } }),
-          };
-          totalPostCount = await db.post.count({ where: randomFilter as any });
+            ...(excludeVotes &&
+              votedPostIds.length > 0 && { id: { notIn: votedPostIds } }),
+          }) as any;
+
+        let randomFilter: any = null;
+        let totalPostCount = 0;
+
+        outer: for (const includeGender of [true, false]) {
+          for (const excludeVotes of [true, false]) {
+            const f = makeRandomFilter(includeGender, excludeVotes);
+            totalPostCount = await db.post.count({ where: f });
+            if (totalPostCount > 0) {
+              randomFilter = f;
+              break outer;
+            }
+          }
         }
 
-        if (totalPostCount > 0) {
+        if (totalPostCount > 0 && randomFilter) {
           // Calculate how many posts to skip to get a random slice
           // Using a random offset for true randomization
           const maxSkip = Math.max(0, totalPostCount - limit);
