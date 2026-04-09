@@ -86,35 +86,33 @@ const app = new Hono()
         }
       }
 
-      // Handle auth user specific data fetching
+      // Handle auth user specific data fetching (parallelize to cut one RTT)
       if (user) {
-        // Fetch user's voted posts and exclude them (more efficient select)
-        const votedPosts = await db.vote.findMany({
-          where: { voterId: user.id },
-          select: { postId: true },
-        });
-        votedPostIds = votedPosts.map((vote) => vote.postId);
-
-        // Get recent impressions (for scoring and avoiding repeats)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const userImpressions = await db.postImpression.findMany({
-          where: {
-            userId: user.id,
-            viewedAt: { gte: thirtyDaysAgo },
-          },
-          select: { postId: true, viewedAt: true },
-          orderBy: { viewedAt: 'desc' },
-          take: 50, // Limit impressions for faster feed (Hostinger ↔ DigitalOcean DB)
-        });
+        const [votedPosts, userImpressions] = await Promise.all([
+          db.vote.findMany({
+            where: { voterId: user.id },
+            select: { postId: true },
+          }),
+          db.postImpression.findMany({
+            where: {
+              userId: user.id,
+              viewedAt: { gte: thirtyDaysAgo },
+            },
+            select: { postId: true, viewedAt: true },
+            orderBy: { viewedAt: 'desc' },
+            take: 50,
+          }),
+        ]);
 
-        // Create a map for faster lookups
+        votedPostIds = votedPosts.map((vote) => vote.postId);
+
         userImpressions.forEach((imp) => {
           impressionMap.set(imp.postId, new Date(imp.viewedAt));
         });
 
-        // Get list of recently viewed post IDs
         viewedPostIds = userImpressions.map((imp) => imp.postId);
       } else {
         // For anonymous users, get viewed posts from cookies
@@ -145,62 +143,77 @@ const app = new Hono()
         ...(user && { creatorId: { not: user.id } }),
       };
 
-      // Include specific post if ID is provided
-      let requestedPost: any = null;
-      if (id) {
-        requestedPost = await db.post.findFirst({
-          where: { AND: [{ id }, { creatorId: { not: user?.id } }] },
-          include: {
-            creator: { select: { id: true, gender: true, name: true, image: true, username: true } },
-            _count: { select: { vote: true } },
-            vote: {
-              include: { voter: { select: { id: true, name: true, image: true } } },
-              take: 3,
-            },
-          },
-        });
-      }
-
-      // First try to get posts that user hasn't seen
-      const fetchMultiplier = 5; // Fetch 5x the posts we need
-      const candidatePosts = await db.post.findMany({
-          where: authFilter,
+      const postListSelect = {
+        id: true,
+        caption: true,
+        tags: true,
+        image: true,
+        approvalStatus: true,
+        averageRating: true,
+        totalVotes: true,
+        weightedRating: true,
+        ratingDistribution: true,
+        impressions: true,
+        sharesCount: true,
+        creatorId: true,
+        createdAt: true,
+        updatedAt: true,
+        creator: {
+          select: { id: true, gender: true, name: true, image: true, username: true },
+        },
+        _count: { select: { vote: true } },
+        vote: {
           select: {
             id: true,
-            caption: true,
-            tags: true,
-            image: true,
-            approvalStatus: true,
-            averageRating: true,
-            totalVotes: true,
-            weightedRating: true,
-            ratingDistribution: true,
-            impressions: true,
-            sharesCount: true,
-            creatorId: true,
-            createdAt: true,
-            updatedAt: true,
-            creator: {
-              select: { id: true, gender: true, name: true, image: true, username: true },
-            },
-            _count: { select: { vote: true } },
-            vote: {
-              select: {
-                id: true,
-                voterId: true,
-                ipAddress: true,
-                voter: { select: { id: true, name: true, image: true } },
-              },
-              take: 3,
-            },
+            voterId: true,
+            ipAddress: true,
+            voter: { select: { id: true, name: true, image: true } },
           },
-          take: Math.min(limit * fetchMultiplier, 100),
-          skip,
-          orderBy: [
-            { createdAt: 'desc' },
-            { weightedRating: 'desc' },
-          ],
-        });
+          take: 3,
+        },
+      } as const;
+
+      // Deep link + main feed in parallel (same RTT budget as one findMany)
+      const fetchMultiplier = 5;
+      const candidatePromise = db.post.findMany({
+        where: authFilter,
+        select: postListSelect,
+        take: Math.min(limit * fetchMultiplier, 100),
+        skip,
+        orderBy: [
+          { createdAt: 'desc' },
+          { weightedRating: 'desc' },
+        ],
+      });
+
+      let requestedPost: any = null;
+      const [requestedPostResult, candidatePosts] = await Promise.all([
+        id
+          ? db.post.findFirst({
+              where: { AND: [{ id }, { creatorId: { not: user?.id } }] },
+              include: {
+                creator: {
+                  select: {
+                    id: true,
+                    gender: true,
+                    name: true,
+                    image: true,
+                    username: true,
+                  },
+                },
+                _count: { select: { vote: true } },
+                vote: {
+                  include: {
+                    voter: { select: { id: true, name: true, image: true } },
+                  },
+                  take: 3,
+                },
+              },
+            })
+          : Promise.resolve(null),
+        candidatePromise,
+      ]);
+      requestedPost = requestedPostResult;
 
       // If no unseen posts are available, get random posts
       let randomPosts: any[] = [];
@@ -216,17 +229,29 @@ const app = new Hono()
               votedPostIds.length > 0 && { id: { notIn: votedPostIds } }),
           }) as any;
 
-        let randomFilter: any = null;
-        let totalPostCount = 0;
+        const f1 = makeRandomFilter(true, true);
+        let randomFilter: any = f1;
+        let totalPostCount = await db.post.count({ where: f1 });
 
-        outer: for (const includeGender of [true, false]) {
-          for (const excludeVotes of [true, false]) {
-            const f = makeRandomFilter(includeGender, excludeVotes);
-            totalPostCount = await db.post.count({ where: f });
-            if (totalPostCount > 0) {
-              randomFilter = f;
-              break outer;
-            }
+        // If strict filter matches nothing, try remaining combinations in one parallel batch (fewer RTTs than 3 sequential counts).
+        if (totalPostCount === 0) {
+          const f2 = makeRandomFilter(true, false);
+          const f3 = makeRandomFilter(false, true);
+          const f4 = makeRandomFilter(false, false);
+          const [c2, c3, c4] = await Promise.all([
+            db.post.count({ where: f2 }),
+            db.post.count({ where: f3 }),
+            db.post.count({ where: f4 }),
+          ]);
+          const ordered: [any, number][] = [
+            [f2, c2],
+            [f3, c3],
+            [f4, c4],
+          ];
+          const hit = ordered.find(([, c]) => c > 0);
+          if (hit) {
+            randomFilter = hit[0];
+            totalPostCount = hit[1];
           }
         }
 

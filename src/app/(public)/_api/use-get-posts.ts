@@ -13,8 +13,9 @@ interface PostsResponse {
 export const useGetPosts = (preference?: Gender, id?: string) => {
   return useInfiniteQuery<PostsResponse>({
     queryKey: [QUERY_KEYS.POST, preference, id],
-    // 0 so MALE/FEMALE/BOTH switches and empty responses are not cached for 1m (felt like "no posts until cache clear").
-    staleTime: 0,
+    // Preference is part of queryKey, so each MALE/FEMALE/BOTH has its own cache. Short stale avoids refetching on every focus (staleTime: 0 felt slow).
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
     queryFn: async ({ pageParam = 1 }) => {
       const response = await client.api.post.$get({
         query: { page: String(pageParam), preference, id },
