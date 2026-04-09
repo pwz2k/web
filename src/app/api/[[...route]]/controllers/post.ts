@@ -205,15 +205,23 @@ const app = new Hono()
       // If no unseen posts are available, get random posts
       let randomPosts: any[] = [];
       if (candidatePosts.length === 0) {
-        // Only exclude self-created posts for authenticated users
-        const randomFilter = {
+        // Only exclude self-created posts for authenticated users; exclude voted posts when possible.
+        let randomFilter: Record<string, unknown> = {
           ...baseFilter,
           ...(user && { creatorId: { not: user.id } }),
-          ...(votedPostIds.length > 0 && { id: { notIn: votedPostIds } }), // Add this line
+          ...(votedPostIds.length > 0 && { id: { notIn: votedPostIds } }),
         };
 
-        // Get the total count first to determine how many posts exist
-        const totalPostCount = await db.post.count({ where: randomFilter });
+        let totalPostCount = await db.post.count({ where: randomFilter as any });
+
+        // User has voted on every post — excluding votes leaves nothing; still show the catalog.
+        if (totalPostCount === 0 && votedPostIds.length > 0) {
+          randomFilter = {
+            ...baseFilter,
+            ...(user && { creatorId: { not: user.id } }),
+          };
+          totalPostCount = await db.post.count({ where: randomFilter as any });
+        }
 
         if (totalPostCount > 0) {
           // Calculate how many posts to skip to get a random slice
@@ -223,7 +231,7 @@ const app = new Hono()
             maxSkip > 0 ? Math.floor(Math.random() * maxSkip) : 0;
 
           randomPosts = await db.post.findMany({
-            where: randomFilter,
+            where: randomFilter as any,
             select: {
               id: true,
               caption: true,
@@ -263,7 +271,12 @@ const app = new Hono()
       }
 
       // Combine candidate posts with random posts (if needed)
-      const allCandidates = [...candidatePosts, ...randomPosts];
+      let allCandidates = [...candidatePosts, ...randomPosts];
+
+      // `?id=` deep link: main query can return nothing (seen/voted everything) but post still exists
+      if (allCandidates.length === 0 && requestedPost) {
+        allCandidates = [requestedPost];
+      }
 
       // If still no posts, return 200
       if (allCandidates.length === 0) {
