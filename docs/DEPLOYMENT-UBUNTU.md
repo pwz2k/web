@@ -326,4 +326,5 @@ For issues, check:
 - App logs: `pm2 logs uploto` or `docker logs uploto`
 - Nginx: `sudo tail -f /var/log/nginx/error.log`
 - **400 Request Header Or Cookie Too Large:** increase `large_client_header_buffers` in the `server` block (see section 7) and deploy the app’s JWT cookie slimming (long session cookies from NextAuth). Users can clear site cookies as a temporary workaround.
+- **502 + HTML “instead of JSON” in the browser:** Nginx could not reach the Next.js process (`proxy_pass` target). On the server: `ss -tlnp | grep 3000`, `curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/`, `pm2 status` / `docker ps`, and `sudo tail -50 /var/log/nginx/error.log`. Ensure the app is running on the **same port** as in Nginx (often `3000`), then `sudo systemctl reload nginx`.
 - Database: `npx prisma db pull` or connect with `psql` to verify connectivity

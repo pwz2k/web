@@ -15,14 +15,28 @@ function isSelfHostedMode(): boolean {
 
 /**
  * Checkout / create-payment URL.
- * - PAYRAM_CHECKOUT_URL: full URL (highest priority)
+ * - PAYRAM_CHECKOUT_URL: full URL, or origin only (https://payram.example.com) — with
+ *   PAYRAM_SELF_HOSTED, origin-only is rewritten to …/api/v1/payment.
  * - PAYRAM_API_BASE_URL: origin only; path depends on PAYRAM_SELF_HOSTED
  * - Default: Payram Cloud https://api.payram.com/v1/checkout
  */
 function resolvePayramCheckoutUrl(): string {
   const full = process.env.PAYRAM_CHECKOUT_URL?.trim();
   if (full) {
-    return full.replace(/\/+$/, '');
+    const trimmed = full.replace(/\/+$/, '');
+    if (isSelfHostedMode()) {
+      try {
+        const u = new URL(
+          /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+        );
+        if (u.pathname === '/' || u.pathname === '') {
+          return `${u.origin}/api/v1/payment`;
+        }
+      } catch {
+        /* use trimmed as-is */
+      }
+    }
+    return trimmed;
   }
   const base = (
     process.env.PAYRAM_API_BASE_URL?.trim() || PAYRAM_CLOUD_DEFAULT
