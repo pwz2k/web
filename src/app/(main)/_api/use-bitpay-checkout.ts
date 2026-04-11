@@ -1,4 +1,5 @@
 import { client } from '@/lib/hono';
+import { parseResponseJson } from '@/lib/parse-api-response';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -6,11 +7,15 @@ import { useRouter } from 'next/navigation';
 const createCheckoutSession = async ({ amount }: { amount: number }) => {
   const response = await client.api.bitpay.checkout.$post({ json: { amount } });
 
+  const data = await parseResponseJson<{ paymentUrl?: string; message?: string }>(
+    response
+  );
+
   if (!response.ok) {
-    throw new Error('Failed to create checkout session');
+    throw new Error(data.message || 'Failed to create checkout session');
   }
 
-  const { paymentUrl } = await response.json();
+  const { paymentUrl } = data;
   return paymentUrl;
 };
 

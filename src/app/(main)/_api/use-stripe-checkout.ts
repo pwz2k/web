@@ -1,4 +1,5 @@
 import { client } from '@/lib/hono';
+import { parseResponseJson } from '@/lib/parse-api-response';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { useMutation } from '@tanstack/react-query';
 
@@ -11,11 +12,15 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 const createCheckoutSession = async ({ amount }: { amount: number }) => {
   const response = await client.api.stripe.checkout.$post({ json: { amount } });
 
+  const data = await parseResponseJson<{
+    sessionId?: string;
+    message?: string;
+  }>(response);
+
   if (!response.ok) {
-    throw new Error('Failed to create checkout session');
+    throw new Error(data.message || 'Failed to create checkout session');
   }
 
-  const data = (await response.json()) as { sessionId?: string };
   if (!data.sessionId) {
     throw new Error('Failed to create checkout session');
   }

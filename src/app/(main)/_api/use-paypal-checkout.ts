@@ -1,4 +1,5 @@
 import { client } from '@/lib/hono';
+import { parseResponseJson } from '@/lib/parse-api-response';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -6,11 +7,15 @@ import { useRouter } from 'next/navigation';
 const createCheckoutSession = async ({ amount }: { amount: number }) => {
   const response = await client.api.paypal.checkout.$post({ json: { amount } });
 
+  const data = await parseResponseJson<{ approvalUrl?: string; message?: string }>(
+    response
+  );
+
   if (!response.ok) {
-    throw new Error('Failed to create checkout session');
+    throw new Error(data.message || 'Failed to create checkout session');
   }
 
-  const { approvalUrl } = await response.json();
+  const { approvalUrl } = data;
   return approvalUrl;
 };
 

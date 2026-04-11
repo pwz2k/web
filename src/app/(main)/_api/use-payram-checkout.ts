@@ -1,4 +1,5 @@
 import { client } from '@/lib/hono';
+import { parseResponseJson } from '@/lib/parse-api-response';
 import { useMutation } from '@tanstack/react-query';
 
 const createPayramCheckout = async ({ amount }: { amount: number }) => {
@@ -6,10 +7,10 @@ const createPayramCheckout = async ({ amount }: { amount: number }) => {
     json: { amount, provider: 'payram' },
   });
 
-  const data = (await response.json()) as {
+  const data = await parseResponseJson<{
     url?: string;
     message?: string;
-  };
+  }>(response);
 
   if (!response.ok) {
     throw new Error(
