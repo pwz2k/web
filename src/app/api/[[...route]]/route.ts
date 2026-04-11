@@ -11,6 +11,7 @@ import {
   moderator,
   moderatorRoutes,
   paypal,
+  payram,
   post,
   report,
   stripe,
@@ -41,6 +42,7 @@ const routes = app
   .route('/report', report)
   .route('/tip', tip)
   .route('/stripe', stripe)
+  .route('/payram', payram)
   .route('/bitpay', bitpay)
   .route('/paypal', paypal)
   .route('/contact' , contact)

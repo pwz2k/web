@@ -5,6 +5,7 @@ export const PayoutMethodLogosSrc: Record<
   string
 > = {
   STRIPE: '/company_logos/stripe.jpeg',
+  PAYRAM: '/company_logos/payram.svg',
   PAYPAL: '/company_logos/paypal-logo.svg',
   BTC: '/company_logos/btc.png',
   ETH: '/company_logos/eth.png',

@@ -3,8 +3,8 @@ import { parseResponseJson } from '@/lib/parse-api-response';
 import { useMutation } from '@tanstack/react-query';
 
 const createPayramCheckout = async ({ amount }: { amount: number }) => {
-  const response = await client.api.stripe.checkout.$post({
-    json: { amount, provider: 'payram' },
+  const response = await client.api.payram.checkout.$post({
+    json: { amount },
   });
 
   const data = await parseResponseJson<{

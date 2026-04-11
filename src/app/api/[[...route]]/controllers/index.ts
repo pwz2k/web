@@ -3,6 +3,7 @@ export { default as comment } from './comment';
 export { default as hello } from './hello';
 export { default as moderator } from './moderator';
 export { default as paypal } from './paypal';
+export { default as payram } from './payram';
 export { default as post } from './post';
 export { default as report } from './report';
 export { default as stripe } from './stripe';

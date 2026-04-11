@@ -131,6 +131,18 @@ export function AddFundsForm({
           }
         );
         break;
+      case AvailablePayoutMethods.PAYRAM:
+        payramCheckoutMutate(
+          {
+            amount: convertAmountToMiliunits(Number(values.amount) / 10),
+          },
+          {
+            onSuccess: () => {
+              setSuccess(true);
+            },
+          }
+        );
+        break;
       default:
         mutate(
           {
@@ -268,7 +280,8 @@ export function AddFundsForm({
         />
 
         {selectedMethod !== AvailablePayoutMethods.PAYPAL &&
-          selectedMethod !== AvailablePayoutMethods.STRIPE && (
+          selectedMethod !== AvailablePayoutMethods.STRIPE &&
+          selectedMethod !== AvailablePayoutMethods.PAYRAM && (
             <FormField
               control={form.control}
               name='description'
@@ -292,7 +305,8 @@ export function AddFundsForm({
           )}
 
         {selectedMethod !== AvailablePayoutMethods.PAYPAL &&
-          selectedMethod !== AvailablePayoutMethods.STRIPE && (
+          selectedMethod !== AvailablePayoutMethods.STRIPE &&
+          selectedMethod !== AvailablePayoutMethods.PAYRAM && (
             <div className='space-y-2 flex flex-col items-center justify-center text-center'>
               <p className='text-muted-foreground text-sm'>
                 {selectedMethod === AvailablePayoutMethods.VENMO ||
@@ -330,28 +344,10 @@ export function AddFundsForm({
           >
             {selectedMethod === AvailablePayoutMethods.STRIPE
               ? 'Pay with Stripe'
-              : 'Add Funds'}
+              : selectedMethod === AvailablePayoutMethods.PAYRAM
+                ? 'Pay with Payram'
+                : 'Add Funds'}
           </Button>
-          {selectedMethod === AvailablePayoutMethods.STRIPE && (
-            <Button
-              disabled={isPending}
-              type='button'
-              variant='quaternary'
-              className='w-full text-center'
-              onClick={() => {
-                const raw = form.getValues('amount');
-                if (!raw || Number(raw) <= 0) {
-                  form.setError('amount', { message: 'Enter a valid amount' });
-                  return;
-                }
-                payramCheckoutMutate({
-                  amount: convertAmountToMiliunits(Number(raw) / 10),
-                });
-              }}
-            >
-              Pay with Payram
-            </Button>
-          )}
         </div>
       </form>
     </Form>
