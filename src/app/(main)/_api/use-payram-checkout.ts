@@ -6,11 +6,17 @@ const createPayramCheckout = async ({ amount }: { amount: number }) => {
     json: { amount, provider: 'payram' },
   });
 
+  const data = (await response.json()) as {
+    url?: string;
+    message?: string;
+  };
+
   if (!response.ok) {
-    throw new Error('Failed to create Payram checkout session');
+    throw new Error(
+      data.message || 'Failed to create Payram checkout session'
+    );
   }
 
-  const data = (await response.json()) as { url?: string };
   if (!data.url) {
     throw new Error('No checkout URL returned from Payram');
   }
@@ -26,7 +32,9 @@ export const usePayramCheckoutMutation = () => {
     },
     onError: (error) => {
       console.error('Payram payment failed:', error);
-      alert('Payment failed');
+      const msg =
+        error instanceof Error ? error.message : 'Payment failed';
+      alert(msg);
     },
   });
 };
