@@ -1,11 +1,22 @@
 import { AvailablePayoutMethods } from '@prisma/client';
 
+/** Deposit add-funds only — not stored on `AvailablePayoutMethods` (no DB enum migration). */
+export const PAYRAM_DEPOSIT_METHOD = 'PAYRAM' as const;
+
+export type AddFundsMethod = AvailablePayoutMethods | typeof PAYRAM_DEPOSIT_METHOD;
+
+export function depositMethodLogoSrc(method: AddFundsMethod): string {
+  if (method === PAYRAM_DEPOSIT_METHOD) {
+    return '/company_logos/payram.png';
+  }
+  return PayoutMethodLogosSrc[method];
+}
+
 export const PayoutMethodLogosSrc: Record<
   keyof typeof AvailablePayoutMethods,
   string
 > = {
   STRIPE: '/company_logos/stripe.jpeg',
-  PAYRAM: '/company_logos/payram.png',
   PAYPAL: '/company_logos/paypal-logo.svg',
   BTC: '/company_logos/btc.png',
   ETH: '/company_logos/eth.png',

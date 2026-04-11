@@ -32,7 +32,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { paymentQRS } from '@/constants/payment-qrs';
-import { PayoutMethodLogosSrc } from '@/constants/payout-methods-logos-src';
+import {
+  PAYRAM_DEPOSIT_METHOD,
+  depositMethodLogoSrc,
+} from '@/constants/payout-methods-logos-src';
 import { convertAmountToMiliunits } from '@/lib/utils';
 import { AvailablePayoutMethods } from '@prisma/client';
 import { Loader2 } from 'lucide-react';
@@ -51,7 +54,16 @@ const FormSchema = transactionSchema.omit({ type: true }).extend({
     message: 'Amount must be greater than 0',
   }),
   identifier: z.string().optional(),
+  method: z.union([
+    z.nativeEnum(AvailablePayoutMethods),
+    z.literal(PAYRAM_DEPOSIT_METHOD),
+  ]),
 });
+
+const DEPOSIT_METHOD_SELECT_OPTIONS = [
+  ...Object.values(AvailablePayoutMethods),
+  PAYRAM_DEPOSIT_METHOD,
+] as const;
 
 export function AddFundsForm({
   onPendingChange,
@@ -131,7 +143,7 @@ export function AddFundsForm({
           }
         );
         break;
-      case AvailablePayoutMethods.PAYRAM:
+      case PAYRAM_DEPOSIT_METHOD:
         payramCheckoutMutate(
           {
             amount: convertAmountToMiliunits(Number(values.amount) / 10),
@@ -146,9 +158,11 @@ export function AddFundsForm({
       default:
         mutate(
           {
-            ...values,
+            description: values.description,
+            identifier: values.identifier,
             amount: convertAmountToMiliunits(Number(values.amount)),
             type: 'DEPOSIT',
+            method: values.method,
           },
           {
             onSuccess: () => {
@@ -231,7 +245,7 @@ export function AddFundsForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className='capitalize'>
-                  {Object.values(AvailablePayoutMethods).map((method) => (
+                  {DEPOSIT_METHOD_SELECT_OPTIONS.map((method) => (
                     <SelectItem
                       key={method}
                       value={method}
@@ -241,7 +255,7 @@ export function AddFundsForm({
                         <Image
                           width={16}
                           height={16}
-                          src={PayoutMethodLogosSrc[method]}
+                          src={depositMethodLogoSrc(method)}
                           alt='logo'
                         />
                         {method}
@@ -281,7 +295,7 @@ export function AddFundsForm({
 
         {selectedMethod !== AvailablePayoutMethods.PAYPAL &&
           selectedMethod !== AvailablePayoutMethods.STRIPE &&
-          selectedMethod !== AvailablePayoutMethods.PAYRAM && (
+          selectedMethod !== PAYRAM_DEPOSIT_METHOD && (
             <FormField
               control={form.control}
               name='description'
@@ -306,7 +320,7 @@ export function AddFundsForm({
 
         {selectedMethod !== AvailablePayoutMethods.PAYPAL &&
           selectedMethod !== AvailablePayoutMethods.STRIPE &&
-          selectedMethod !== AvailablePayoutMethods.PAYRAM && (
+          selectedMethod !== PAYRAM_DEPOSIT_METHOD && (
             <div className='space-y-2 flex flex-col items-center justify-center text-center'>
               <p className='text-muted-foreground text-sm'>
                 {selectedMethod === AvailablePayoutMethods.VENMO ||
@@ -344,7 +358,7 @@ export function AddFundsForm({
           >
             {selectedMethod === AvailablePayoutMethods.STRIPE
               ? 'Pay with Stripe'
-              : selectedMethod === AvailablePayoutMethods.PAYRAM
+              : selectedMethod === PAYRAM_DEPOSIT_METHOD
                 ? 'Pay with Payram'
                 : 'Add Funds'}
           </Button>

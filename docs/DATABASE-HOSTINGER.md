@@ -11,6 +11,12 @@ Use these values for the app when the database is on Hostinger.
 | User      | app_admin_user         |
 | PostgreSQL| 17.8                    |
 
+### If `psql -U postgres` says “password authentication failed”
+
+Hostinger’s **managed** PostgreSQL often does **not** allow the `postgres` role over the network, or the password is only available inside **hPanel** (not the same as `app_admin_user`). Do **not** rely on `sudo -u postgres psql` on your VPS unless Postgres is actually installed **on that VPS**; your app uses host `72.61.8.11` (remote DB), so fixes must use **hPanel SQL / phpPgAdmin** or credentials Hostinger lists for an **admin** user, or open a ticket for them to run owner-only SQL.
+
+For enum changes (e.g. adding `PAYRAM`), use the **SQL / Query** tab in hPanel (see “Prisma: must be owner of type …” below) if remote `postgres` login is not available.
+
 ## .env
 
 Add or update in `.env`:
@@ -48,6 +54,14 @@ Then regenerate the client:
 ```bash
 npx prisma generate
 ```
+
+## Prisma: `must be owner of type "AvailablePayoutMethods"` (enum changes)
+
+`app_admin_user` usually **cannot** `ALTER TYPE` to add enum values. Someone with **owner or superuser** rights must run owner-level SQL, or use Hostinger’s admin SQL tool with an owner account.
+
+**Payram in “Add funds”:** the app treats **Payram as a deposit-only option** (`PAYRAM` in the UI) **without** adding `PAYRAM` to the PostgreSQL enum, so **`npx prisma db push` does not need a new enum value for Payram**. If you still see this error for another schema change, use an admin user or support as above.
+
+If you previously added `PAYRAM` to the enum manually, `db push` should align; if you never could, the current code does not require it for Payram checkout.
 
 ## Permission denied for sequence (e.g. Vote_id_seq)
 

@@ -462,7 +462,6 @@ enum AvailablePayoutMethods {
   ZELLE
   VENMO
   STRIPE
-  PAYRAM
   BTC
   ETH
   LITECOIN
