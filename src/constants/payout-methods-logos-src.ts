@@ -1,5 +1,9 @@
 import { AvailablePayoutMethods } from '@prisma/client';
 
+/** Simple Icons on jsDelivr — avoids missing files under `/public/company_logos/`. */
+const SI = (slug: string) =>
+  `https://cdn.jsdelivr.net/npm/simple-icons/icons/${slug}.svg`;
+
 /** Deposit add-funds only — not stored on `AvailablePayoutMethods` (no DB enum migration). */
 export const PAYRAM_DEPOSIT_METHOD = 'PAYRAM' as const;
 
@@ -16,17 +20,18 @@ export const PayoutMethodLogosSrc: Record<
   keyof typeof AvailablePayoutMethods,
   string
 > = {
-  STRIPE: '/company_logos/stripe.jpeg',
+  STRIPE: SI('stripe'),
   PAYPAL: '/company_logos/paypal-logo.svg',
-  BTC: '/company_logos/btc.png',
-  ETH: '/company_logos/eth.png',
-  LITECOIN: '/company_logos/litecoin.png',
-  USDC_ERC_20: '/company_logos/usdc_erc_20.png',
-  CARDANO_ON_ADA_NETWORK: '/company_logos/cardano_on_ada_network.png',
-  POLYGON: '/company_logos/polygon.png',
-  XRP: '/company_logos/xrp.png',
-  TETHER: '/company_logos/tether.png',
-  DOGECOIN: '/company_logos/dogecoin.png',
-  VENMO: '/company_logos/vimeo.png',
-  ZELLE: '/company_logos/zelle.png',
+  BTC: SI('bitcoin'),
+  ETH: SI('ethereum'),
+  LITECOIN: SI('litecoin'),
+  // No dedicated USDC glyph in Simple Icons CDN set; Circle is the USDC issuer.
+  USDC_ERC_20: SI('circle'),
+  CARDANO_ON_ADA_NETWORK: SI('cardano'),
+  POLYGON: SI('polygon'),
+  XRP: SI('ripple'),
+  TETHER: SI('tether'),
+  DOGECOIN: SI('dogecoin'),
+  VENMO: SI('venmo'),
+  ZELLE: SI('zelle'),
 };

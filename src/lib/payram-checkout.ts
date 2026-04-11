@@ -153,7 +153,7 @@ export async function createPayramCheckoutUrl(
   const { data, rawText } = await parsePayramResponse(response);
 
   if (!response.ok) {
-    const msg =
+    const baseMsg =
       typeof data.message === 'string'
         ? data.message
         : typeof data.error === 'string'
@@ -161,7 +161,11 @@ export async function createPayramCheckoutUrl(
           : rawText && rawText.length < 500
             ? rawText
             : `Payram request failed (${response.status})`;
-    throw new Error(msg);
+    const hint404 =
+      response.status === 404
+        ? ` Wrong URL or mode: Payram Cloud uses POST …/v1/checkout + Bearer (unset PAYRAM_SELF_HOSTED). Self-hosted uses POST …/api/v1/payment + API-Key (PAYRAM_SELF_HOSTED=true). Check PAYRAM_CHECKOUT_URL / PAYRAM_API_BASE_URL on the server.`
+        : '';
+    throw new Error(`${baseMsg}${hint404} Request URL: ${checkoutUrl}`);
   }
 
   const url = pickCheckoutUrl(data);

@@ -32,6 +32,11 @@ const nextConfig = {
         port: '',
         pathname: '/f/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.jsdelivr.net',
+        pathname: '/npm/simple-icons/icons/**',
+      },
     ],
     minimumCacheTTL: 600, // 10 min cache for remote images (faster repeat loads)
     // Smaller image sizes so Next serves smaller files = faster load

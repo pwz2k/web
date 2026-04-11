@@ -60,9 +60,10 @@ const FormSchema = transactionSchema.omit({ type: true }).extend({
   ]),
 });
 
+/** Payram first (default + primary deposit path). */
 const DEPOSIT_METHOD_SELECT_OPTIONS = [
-  ...Object.values(AvailablePayoutMethods),
   PAYRAM_DEPOSIT_METHOD,
+  ...Object.values(AvailablePayoutMethods),
 ] as const;
 
 export function AddFundsForm({
@@ -107,7 +108,7 @@ export function AddFundsForm({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      method: 'STRIPE',
+      method: PAYRAM_DEPOSIT_METHOD,
     },
   });
 
