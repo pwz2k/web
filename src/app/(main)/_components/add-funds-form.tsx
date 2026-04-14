@@ -66,9 +66,6 @@ const DEPOSIT_METHOD_SELECT_OPTIONS = [
   ...Object.values(AvailablePayoutMethods),
 ] as const;
 
-const getDepositMethodLabel = (method: (typeof DEPOSIT_METHOD_SELECT_OPTIONS)[number]) =>
-  method === PAYRAM_DEPOSIT_METHOD ? 'Credit Card' : method;
-
 export function AddFundsForm({
   onPendingChange,
 }: {
@@ -262,7 +259,7 @@ export function AddFundsForm({
                           src={depositMethodLogoSrc(method)}
                           alt='logo'
                         />
-                        {getDepositMethodLabel(method)}
+                        {method}
                       </div>
                     </SelectItem>
                   ))}
@@ -363,7 +360,7 @@ export function AddFundsForm({
             {selectedMethod === AvailablePayoutMethods.STRIPE
               ? 'Pay with Stripe'
               : selectedMethod === PAYRAM_DEPOSIT_METHOD
-                ? 'Pay with Credit Card'
+                ? 'Pay with Payram'
                 : 'Add Funds'}
           </Button>
         </div>
