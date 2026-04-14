@@ -2,6 +2,8 @@ import { client } from '@/lib/hono';
 import { parseResponseJson } from '@/lib/parse-api-response';
 import { useMutation } from '@tanstack/react-query';
 
+const PAYRAM_REDIRECT_DELAY_MS = 2500;
+
 const createPayramCheckout = async ({ amount }: { amount: number }) => {
   const response = await client.api.payram.checkout.$post({
     json: { amount },
@@ -29,7 +31,10 @@ export const usePayramCheckoutMutation = () => {
   return useMutation({
     mutationFn: createPayramCheckout,
     onSuccess: (url) => {
-      window.location.assign(url);
+      // Keep the success animation visible briefly before redirecting off-site.
+      window.setTimeout(() => {
+        window.location.assign(url);
+      }, PAYRAM_REDIRECT_DELAY_MS);
     },
     onError: (error) => {
       console.error('Payram payment failed:', error);
