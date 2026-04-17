@@ -83,11 +83,11 @@ const LeftSideGrid = () => {
     <div className='space-y-4'>
       <Card className='rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-6 backdrop-blur-xl space-y-4'>
         <div className='space-y-3'>
-          <h5 className='text-base text-white/90'>This is how it works!</h5>
+          <h5 className='text-base text-white/90'>How It Works</h5>
           <ol className='text-muted-foreground text-sm list-decimal ml-5 space-y-1'>
-            <li>Lorem ipsum dolor sit amet consectetur elit accumsan nec.</li>
-            <li>Lorem ipsum dolor sit amet consectetur elit accumsan nec.</li>
-            <li>Lorem ipsum dolor sit amet consectetur elit accumsan nec.</li>
+            <li>Look at the picture on the website.</li>
+            <li>In the overlay box, click to rate the person.</li>
+            <li>See what others thought on the screen. Repeat.</li>
           </ol>
         </div>
         <div className='flex flex-wrap justify-around items-center gap-0.5'>
@@ -142,22 +142,18 @@ const LeftSideGrid = () => {
               onClick={shareContent}
               disabled={!activePost?.id}
             >
-              Share this post
+              Share this photo
             </Button>
           </div>
         </CardContent>
         <CardContent className='p-0 space-y-4'>
-          <h5 className='text-base text-white/90'>Downloads the app</h5>
+          <h5 className='text-base text-white/90'>Download the app</h5>
           <div className='p-2 border-2 border-white/20 rounded inline-block'>
             <QrCode size={87} />
           </div>
         </CardContent>
         <CardFooter className='p-0 flex-col space-y-2'>
           <div className='flex flex-wrap items-center space-x-1 text-muted-foreground text-xs'>
-            <Link href='/about' className='hover:underline'>
-              About
-            </Link>
-            <span>•</span>
             <Link href='/contact' className='hover:underline'>
               Help & Support
             </Link>
@@ -176,7 +172,7 @@ const LeftSideGrid = () => {
             </Link>
           </div>
           <div className='flex flex-wrap items-center space-x-1 text-muted-foreground text-xs'>
-            <span>©2024 Uploto</span>
+            <span>©2026 PYP6</span>
           </div>
         </CardFooter>
       </Card>
