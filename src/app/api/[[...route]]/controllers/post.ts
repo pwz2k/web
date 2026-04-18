@@ -64,7 +64,6 @@ const app = new Hono()
       }
 
       // Track user history for both auth and non-auth users
-      let votedPostIds: string[] = [];
       let viewedPostIds: string[] = [];
       const impressionMap: Map<string, Date> = new Map();
 
@@ -80,6 +79,8 @@ const app = new Hono()
           if (!Array.isArray(previouslySeenPosts)) {
             previouslySeenPosts = [];
           }
+          // Cap cookie-driven exclusions so `notIn` + request stays small (avoids DB timeouts → nginx 502).
+          previouslySeenPosts = previouslySeenPosts.slice(0, 200);
         } catch (e) {
           console.error('Error parsing seenPosts cookie:', e);
           previouslySeenPosts = [];
@@ -91,23 +92,16 @@ const app = new Hono()
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const [votedPosts, userImpressions] = await Promise.all([
-          db.vote.findMany({
-            where: { voterId: user.id },
-            select: { postId: true },
-          }),
-          db.postImpression.findMany({
-            where: {
-              userId: user.id,
-              viewedAt: { gte: thirtyDaysAgo },
-            },
-            select: { postId: true, viewedAt: true },
-            orderBy: { viewedAt: 'desc' },
-            take: 50,
-          }),
-        ]);
-
-        votedPostIds = votedPosts.map((vote) => vote.postId);
+        // Do not load all vote IDs into memory / `notIn` — heavy accounts can exceed query limits and time out.
+        const userImpressions = await db.postImpression.findMany({
+          where: {
+            userId: user.id,
+            viewedAt: { gte: thirtyDaysAgo },
+          },
+          select: { postId: true, viewedAt: true },
+          orderBy: { viewedAt: 'desc' },
+          take: 50,
+        });
 
         userImpressions.forEach((imp) => {
           impressionMap.set(imp.postId, new Date(imp.viewedAt));
@@ -123,6 +117,8 @@ const app = new Hono()
             viewedPostIds = JSON.parse(viewedPostsCookie.value);
             if (!Array.isArray(viewedPostIds)) {
               viewedPostIds = [];
+            } else {
+              viewedPostIds = viewedPostIds.slice(0, 200);
             }
           } catch (e) {
             console.error('Error parsing viewedPosts cookie:', e);
@@ -131,16 +127,21 @@ const app = new Hono()
         }
       }
 
-      // Combine all post IDs to exclude
-      const excludePostIds = [
-        ...new Set([...votedPostIds, ...previouslySeenPosts]),
-      ];
+      // Cookie-based “already shown” IDs only (votes excluded via relation below).
+      const excludePostIds = [...new Set(previouslySeenPosts)];
 
       // Build auth filter with exclusions
-      const authFilter = {
+      const authFilter: Record<string, unknown> = {
         ...baseFilter,
         ...(excludePostIds.length > 0 && { id: { notIn: excludePostIds } }),
         ...(user && { creatorId: { not: user.id } }),
+        ...(user && {
+          NOT: {
+            vote: {
+              some: { voterId: user.id },
+            },
+          },
+        }),
       };
 
       const postListSelect = {
@@ -226,7 +227,11 @@ const app = new Hono()
             ...(includeGender && preference ? { creator: { gender: preference } } : {}),
             ...(user && { creatorId: { not: user.id } }),
             ...(excludeVotes &&
-              votedPostIds.length > 0 && { id: { notIn: votedPostIds } }),
+              user && {
+                NOT: {
+                  vote: { some: { voterId: user.id } },
+                },
+              }),
           }) as any;
 
         const f1 = makeRandomFilter(true, true);
