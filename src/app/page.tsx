@@ -8,18 +8,18 @@ import { SwiperProvider } from './(public)/_hooks/swiper-context';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Uploto',
-  description: 'Discover creative content on Uploto.',
+  title: 'PYP6',
+  description: 'Rating site that allows users to submit photos of themselves to be rated by strangers on a scale of 1 to 10.',
   openGraph: {
-    title: 'Uploto',
-    description: 'Discover creative content on Uploto.',
+    title: 'PYP6',
+    description: 'Rating site that allows users to submit photos of themselves to be rated by strangers on a scale of 1 to 10.',
     url: process.env.NEXT_PUBLIC_APP_URL,
     images: [
       {
         url: `${process.env.NEXT_PUBLIC_APP_URL}/default-og.png`,
         width: 1200,
         height: 630,
-        alt: 'Uploto Default Image',
+        alt: 'PYP6 Default Image',
       },
     ],
     locale: 'en_US',
@@ -27,8 +27,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Uploto',
-    description: 'Discover creative content on Uploto.',
+    title: 'PYP6',
+    description: 'Rating site that allows users to submit photos of themselves to be rated by strangers on a scale of 1 to 10.',
     images: [`${process.env.NEXT_PUBLIC_APP_URL}/default-og.png`],
   },
 };
