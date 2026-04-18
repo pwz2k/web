@@ -310,6 +310,23 @@ const app = new Hono()
         allCandidates = [requestedPost];
       }
 
+      // If the viewer is also the main/only uploader, excluding `creatorId: user.id` leaves zero rows.
+      // Fall back to their own posts so the home feed is not empty after login (common for brand accounts).
+      if (allCandidates.length === 0 && user && page === 1) {
+        const ownPosts = await db.post.findMany({
+          where: {
+            approvalStatus: { in: ['APPROVED', 'PENDING'] },
+            creatorId: user.id,
+          },
+          select: postListSelect,
+          take: Math.min(limit * fetchMultiplier, 100),
+          orderBy: [{ createdAt: 'desc' }],
+        });
+        if (ownPosts.length > 0) {
+          allCandidates = ownPosts;
+        }
+      }
+
       // If still no posts, return 200
       if (allCandidates.length === 0) {
         return c.json(
