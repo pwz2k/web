@@ -26,6 +26,9 @@ function setCached<T>(key: string, value: T, ttlMs: number) {
   memCache.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
 
+/** Bound cookie + `notIn` size (~4KB Set-Cookie / huge IN lists → 502s on nginx). */
+const MAX_TRACKED_SEEN_POST_IDS = 40;
+
 const app = new Hono()
   .get(
     '/',
@@ -79,8 +82,8 @@ const app = new Hono()
           if (!Array.isArray(previouslySeenPosts)) {
             previouslySeenPosts = [];
           }
-          // Cap cookie-driven exclusions so `notIn` + request stays small (avoids DB timeouts → nginx 502).
-          previouslySeenPosts = previouslySeenPosts.slice(0, 200);
+          // Cap cookie-driven exclusions so `notIn` + Set-Cookie stay small (avoids DB timeouts → nginx 502).
+          previouslySeenPosts = previouslySeenPosts.slice(0, MAX_TRACKED_SEEN_POST_IDS);
         } catch (e) {
           console.error('Error parsing seenPosts cookie:', e);
           previouslySeenPosts = [];
@@ -118,7 +121,7 @@ const app = new Hono()
             if (!Array.isArray(viewedPostIds)) {
               viewedPostIds = [];
             } else {
-              viewedPostIds = viewedPostIds.slice(0, 200);
+              viewedPostIds = viewedPostIds.slice(0, MAX_TRACKED_SEEN_POST_IDS);
             }
           } catch (e) {
             console.error('Error parsing viewedPosts cookie:', e);
@@ -512,18 +515,22 @@ const app = new Hono()
         const allSeenPosts = [
           ...newlySeenPostIds,
           ...previouslySeenPosts,
-        ].slice(0, 100);
+        ].slice(0, MAX_TRACKED_SEEN_POST_IDS);
 
-        // Store the updated seen posts in the session
-        cookies().set({
-          name: seenPostsKey,
-          value: JSON.stringify(allSeenPosts),
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 60 * 60, // 1 hour for session storage
-          sameSite: 'lax',
-          path: '/',
-        });
+        // Store the updated seen posts in the session (must not fail the feed if cookie is too large / invalid)
+        try {
+          cookies().set({
+            name: seenPostsKey,
+            value: JSON.stringify(allSeenPosts),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60, // 1 hour for session storage
+            sameSite: 'lax',
+            path: '/',
+          });
+        } catch (e) {
+          console.error('Error setting seenPosts cookie:', e);
+        }
       }
 
       // Update impressions in the background (avoid slowing down feed response)
@@ -556,17 +563,21 @@ const app = new Hono()
         const updatedViewedPosts = [
           ...newlySeenPostIds,
           ...viewedPostIds,
-        ].slice(0, 100); // Limit size
+        ].slice(0, MAX_TRACKED_SEEN_POST_IDS);
 
-        cookies().set({
-          name: 'viewedPosts',
-          value: JSON.stringify(updatedViewedPosts),
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 30 * 24 * 60 * 60, // 30 days
-          sameSite: 'lax',
-          path: '/',
-        });
+        try {
+          cookies().set({
+            name: 'viewedPosts',
+            value: JSON.stringify(updatedViewedPosts),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60, // 30 days
+            sameSite: 'lax',
+            path: '/',
+          });
+        } catch (e) {
+          console.error('Error setting viewedPosts cookie:', e);
+        }
       }
 
       // Clean up posts before returning

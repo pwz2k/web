@@ -144,6 +144,9 @@ model PostImpression {
   post      Post     @relation(fields: [postId], references: [id])
   user      User?    @relation(fields: [userId], references: [id])
 
+  // Enables createMany({ skipDuplicates: true }) for auth impressions (Postgres ON CONFLICT).
+  // Run prisma/scripts/dedupe-post-impression.sql once if migrate/push fails on existing dupes.
+  @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
   @@index([sessionId])
